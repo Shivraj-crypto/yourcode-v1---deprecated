@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 export default function Header({
-  view, setView, problems, state, timer, onCompanyFilter
+  setView, problems, state, timer, onCompanyFilter
 }) {
   const solvedCount = useMemo(() =>
     problems.filter(p => state.statusByProblem[p.id] === 'Solved').length
