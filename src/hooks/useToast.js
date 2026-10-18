@@ -31,6 +31,10 @@ export function useTimer(initial = 0) {
 
   const toggle = useCallback(() => setRunning(r => !r), []);
   const reset = useCallback(() => { setSeconds(0); setRunning(false); }, []);
+  const restore = useCallback((value, shouldRun = false) => {
+    setSeconds(Math.max(0, Number(value) || 0));
+    setRunning(Boolean(shouldRun));
+  }, []);
 
   const format = useCallback((s) => {
     const h = String(Math.floor(s / 3600)).padStart(2, '0');
@@ -39,5 +43,5 @@ export function useTimer(initial = 0) {
     return `${h}:${m}:${sec}`;
   }, []);
 
-  return { seconds, running, toggle, reset, formatted: format(seconds) };
+  return { seconds, running, toggle, reset, restore, formatted: format(seconds) };
 }

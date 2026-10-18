@@ -13,6 +13,8 @@
   background: #262626;
   font-size: 14px;
 }
+.storage-loading { display: grid; flex: 1; place-items: center; color: #aaa; }
+.storage-warning { padding: 8px 14px; border-bottom: 1px solid #704044; color: #ff8585; background: #401e22; font-size: 12px; }
 
 .platform button,
 .platform input,
@@ -102,8 +104,14 @@
 .difficulty.hard { color: #ff5263; }
 .pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 17px 0 18px; }
 .pills button { border: 1px solid #383838; border-radius: 999px; padding: 5px 10px; color: #b0b0b0; background: #ffffff08; font-size: 13px; }
+.pills button:not(:first-child) { display: inline-flex; align-items: center; gap: 6px; }
 .pills button:first-child { color: #e6b158; }
 .pills button:hover { border-color: #686868; background: #ffffff12; }
+.company-logo { display: inline-grid; width: 20px; height: 20px; flex: 0 0 20px; place-items: center; box-sizing: border-box; padding: 3px; border: 1px solid #484848; border-radius: 5px; background: #333; }
+.company-logo svg { display: block; width: 100%; height: 100%; }
+.company-list { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.company-tag { display: inline-flex; align-items: center; gap: 5px; color: #b7b7b7; white-space: nowrap; font-size: 12px; }
+.company-more { color: #858585; font-size: 12px; }
 .hint-box { margin: 12px 0; padding: 12px 14px; border: 1px solid #56452c; border-radius: 7px; color: #c7bba8; background: #ffa1160d; font-size: 13px; }
 .hint-box b { display: block; margin-bottom: 5px; color: #f3b94f; }
 .rich-copy { margin: 16px 0 22px; color: #d1d1d1; font-size: 15px; }
@@ -254,6 +262,8 @@
 .problem-table th,.problem-table td { padding: 14px 15px; border-bottom: 1px solid #2d2d2d; color: #9b9b9b; text-align: left; }
 .problem-table th { color: #818181; background: #202020; font-size: 13px; font-weight: 500; }
 .problem-table td b { color: #e1e1e1; font-weight: 550; }
+.problem-table td .company-list { gap: 7px; }
+.problem-table td .company-logo { width: 18px; height: 18px; flex-basis: 18px; padding: 2px; }
 .problem-table tbody tr:hover { background: #ffffff06; }
 .problem-table tbody tr:last-child td { border-bottom: 0; }
 .problem-table td button { border: 0; border-radius: 5px; padding: 6px 9px; color: #e7b562; background: #ffa11618; }

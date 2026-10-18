@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Editor from '@monaco-editor/react'
+import { faAmazon, faApple, faGoogle, faMeta, faTiktok, faUber } from '@fortawesome/free-brands-svg-icons'
+import { siAutodesk, siGoldmansachs, siNetflix } from 'simple-icons'
 import { COMPANY_LIST, DEFAULT_PROBLEMS, getProblemCompanies } from './data/problems'
 import { useTimer, useToast } from './hooks/useToast'
 import { executeCode } from './utils/executor'
-import { exportBackup, importBackup, loadState, resetState, saveState } from './utils/storage'
+import { createDefaultState, exportBackup, importBackup, loadState, resetState, saveState } from './utils/storage'
 import { highlightCode as highlightSolution } from './utils/highlighter'
 import './Platform.css'
 
@@ -11,6 +13,32 @@ const json = value => JSON.stringify(value, null, 2)
 const formatTime = value => `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}`
 const formatInput = (args, names = []) => args.map((value, index) => `${names[index] || `arg${index + 1}`} =\n${JSON.stringify(value)}`).join('\n')
 const formatOutput = value => typeof value === 'string' ? value : JSON.stringify(value) ?? String(value)
+const COMPANY_BRANDS = {
+  Amazon: { fontAwesome: faAmazon, color: '#ff9900' },
+  Google: { fontAwesome: faGoogle, color: '#4285f4' },
+  Meta: { fontAwesome: faMeta, color: '#0866ff' },
+  Microsoft: { custom: 'microsoft' },
+  Apple: { fontAwesome: faApple, color: '#f4f4f4' },
+  'Goldman Sachs': { simpleIcon: siGoldmansachs, color: '#75aadb' },
+  Bloomberg: { custom: 'bloomberg' },
+  Uber: { fontAwesome: faUber, color: '#f4f4f4' },
+  Netflix: { simpleIcon: siNetflix, color: '#e50914' },
+  Adobe: { custom: 'adobe' },
+  TikTok: { fontAwesome: faTiktok, color: '#25f4ee' },
+  'Capital One': { custom: 'capital-one' },
+  Autodesk: { simpleIcon: siAutodesk, color: '#0696d7' },
+  'Scale AI': { custom: 'scale-ai' },
+}
+const CompanyLogo = ({ name }) => {
+  const brand = COMPANY_BRANDS[name]
+  const svgColor = brand?.color || '#b8b8b8'
+  if (brand?.fontAwesome) {
+    const [width, height, , , paths] = brand.fontAwesome.icon
+    return <span className="company-logo" title={`${name} logo`}><svg aria-hidden="true" viewBox={`0 0 ${width} ${height}`}><path fill={svgColor} d={Array.isArray(paths) ? paths.join(' ') : paths} /></svg></span>
+  }
+  if (brand?.simpleIcon) return <span className="company-logo" title={`${name} logo`}><svg aria-hidden="true" viewBox="0 0 24 24"><path fill={svgColor} d={brand.simpleIcon.path} /></svg></span>
+  return <span className="company-logo" title={`${name} logo`}><svg aria-hidden="true" viewBox="0 0 24 24">{brand?.custom === 'microsoft' ? <><path fill="#f25022" d="M1 1h10v10H1z" /><path fill="#7fba00" d="M13 1h10v10H13z" /><path fill="#00a4ef" d="M1 13h10v10H1z" /><path fill="#ffb900" d="M13 13h10v10H13z" /></> : brand?.custom === 'adobe' ? <path fill="#ed1c24" fillRule="evenodd" d="M2 22 9.2 2h5.6L22 22h-5.4L12 9.6 7.4 22H2Zm7.2-4h5.6L12 10.5 9.2 18Z" /> : brand?.custom === 'capital-one' ? <><path fill="none" stroke="#0052a4" strokeLinecap="round" strokeWidth="3" d="M18.5 8.5A8 8 0 1 0 19 16" /><path fill="none" stroke="#0052a4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" d="M7 6.5c4.8-3.7 10.7-4.2 15-2.5l-2.2 4.1" /></> : brand?.custom === 'bloomberg' ? <text fill="#f4f4f4" x="3" y="21" fontFamily="Arial,sans-serif" fontSize="21" fontWeight="700">B</text> : <text fill="#a78bfa" x="3" y="21" fontFamily="Arial,sans-serif" fontSize="21" fontWeight="700">S</text>}</svg></span>
+}
 
 const configureMonacoTheme = monaco => monaco.editor.defineTheme('yourcode-dark', {
   base: 'vs-dark',
@@ -31,7 +59,9 @@ const configureMonacoTheme = monaco => monaco.editor.defineTheme('yourcode-dark'
 })
 
 export default function Platform() {
-  const [state, setState] = useState(loadState)
+  const [state, setState] = useState(createDefaultState)
+  const [storageReady, setStorageReady] = useState(false)
+  const [storageError, setStorageError] = useState('')
   const [view, setView] = useState('workspace')
   const [tab, setTab] = useState('Description')
   const highlightCode = tab === 'Solutions' ? highlightSolution : () => ''
@@ -62,23 +92,45 @@ export default function Platform() {
   const problem = problems.find(item => item.id === state.currentProblemId) || problems[0]
   const testCases = [...(problem.testCases || []), ...(customCases[problem.id] || [])]
   const companies = getProblemCompanies(problem)
-  const timer = useTimer(state.activeSession?.elapsedSeconds || 0)
+  const { seconds: timerSeconds, running: timerRunning, toggle: toggleTimer, reset: resetTimer, restore: restoreTimer, formatted: formattedTime } = useTimer()
   const { toast, showToast } = useToast()
 
   useEffect(() => () => editorCursorListener.current?.dispose(), [])
 
   useEffect(() => {
+    let active = true
+    loadState().then(loaded => {
+      if (!active) return
+      setState(loaded)
+      setLanguage(loaded.language || 'python')
+      setStorageReady(true)
+    }).catch(error => {
+      if (!active) return
+      console.error('Could not open local SQLite storage:', error)
+      setStorageError(error.message || 'Could not open local SQLite storage')
+      setStorageReady(true)
+    })
+    return () => { active = false }
+  }, [])
+
+  useEffect(() => {
+    if (storageReady) restoreTimer(state.activeSession?.elapsedSeconds || 0, state.activeSession?.running)
+  }, [storageReady, state.activeSession?.elapsedSeconds, state.activeSession?.running, restoreTimer])
+
+  useEffect(() => {
+    if (!storageReady) return
     const key = `${problem.id}__${language}`
-    setCode(state.userCode?.[key] ?? problem.starterCode?.[language] ?? '')
+    setCode(state.userCode?.[key] ?? '')
     setBookmark(Boolean(state.bookmarks?.[problem.id]))
     setResults(null)
     setRunError('')
     setActiveCase(0)
-  }, [problem.id, language])
+  }, [problem.id, language, storageReady, state.bookmarks, state.userCode])
 
   useEffect(() => {
-    saveState({ ...state, language, activeSession: { ...state.activeSession, elapsedSeconds: timer.seconds, running: timer.running } })
-  }, [state, language, timer.seconds, timer.running])
+    if (!storageReady) return
+    saveState({ ...state, language, activeSession: { ...state.activeSession, elapsedSeconds: timerSeconds, running: timerRunning } }).catch(error => setStorageError(error.message || 'Could not save local SQLite data'))
+  }, [state, language, timerSeconds, timerRunning, storageReady])
 
   useEffect(() => {
     const onKeyDown = event => {
@@ -139,19 +191,20 @@ export default function Platform() {
     const matchesStatus = statusFilter === 'all' || (state.statusByProblem?.[item.id] || 'Unsolved') === statusFilter
     return matchesStatus && (company === 'all' || getProblemCompanies(item).includes(company)) && (difficulty === 'all' || item.difficulty === difficulty) && `${item.title} ${item.topic}`.toLowerCase().includes(search.toLowerCase())
   })
-  const resetCode = () => updateCode(problem.starterCode?.[language] || '')
+  const resetCode = () => updateCode('')
+  const copySolutionToEditor = () => updateCode(problem.starterCode?.[language] || '')
   const startSession = () => {
-    timer.reset()
-    timer.toggle()
+    resetTimer()
+    toggleTimer()
     patch({ activeSession: { running: true, elapsedSeconds: 0, startedAt: new Date().toISOString(), solvedInSession: [] } })
     notify('Practice session started')
   }
   const saveSession = () => {
     const active = state.activeSession || {}
-    const startedAt = active.startedAt ? new Date(active.startedAt) : new Date(Date.now() - timer.seconds * 1000)
-    const session = { id: Date.now(), title: `Practice · ${startedAt.toLocaleDateString()}`, durationMinutes: Math.max(1, Math.round(timer.seconds / 60)), problemsSolved: active.solvedInSession?.length || 0, date: startedAt.toISOString() }
+    const startedAt = active.startedAt ? new Date(active.startedAt) : new Date(Date.now() - timerSeconds * 1000)
+    const session = { id: Date.now(), title: `Practice · ${startedAt.toLocaleDateString()}`, durationMinutes: Math.max(1, Math.round(timerSeconds / 60)), problemsSolved: active.solvedInSession?.length || 0, date: startedAt.toISOString() }
     patch({ sessions: [session, ...(state.sessions || [])], activeSession: { running: false, elapsedSeconds: 0, startedAt: null, solvedInSession: [] } })
-    timer.reset()
+    resetTimer()
     notify('Practice session saved')
   }
   const restoreBackup = async event => {
@@ -205,7 +258,7 @@ export default function Platform() {
       <button className="run-button" onClick={() => run(false)} disabled={busy}>▶ <span>{busy ? 'Running…' : 'Run'}</span><kbd>Ctrl ↵</kbd></button>
       <button className="submit-button" onClick={() => run(true)} disabled={busy}>⇧ <span>Submit</span></button>
       <button className="header-link sessions-link" onClick={() => setView('sessions')}>Sessions <b>{state.sessions?.length || 0}</b></button>
-      <div className="timer-pill"><i className={timer.running ? 'live' : ''} /><button aria-label={timer.running ? 'Pause timer' : 'Start timer'} onClick={timer.toggle}>{timer.running ? 'Ⅱ' : '▶'}</button><b>{timer.formatted}</b><button aria-label="Reset timer" onClick={timer.reset}>↻</button></div>
+      <div className="timer-pill"><i className={timerRunning ? 'live' : ''} /><button aria-label={timerRunning ? 'Pause timer' : 'Start timer'} onClick={toggleTimer}>{timerRunning ? 'Ⅱ' : '▶'}</button><b>{formattedTime}</b><button aria-label="Reset timer" onClick={resetTimer}>↻</button></div>
       <button className="avatar" title="YourCode profile">Y</button>
     </div>
   </header>
@@ -214,13 +267,13 @@ export default function Platform() {
   const description = <div className="description">
     <div className="problem-title"><div><div className="problem-number">Problem {problem.number}</div><h1>{problem.title}</h1></div><button className={`bookmark-button ${bookmark ? 'saved' : ''}`} title={bookmark ? 'Remove bookmark' : 'Bookmark problem'} onClick={() => { const next = !bookmark; setBookmark(next); patch({ bookmarks: { ...state.bookmarks, [problem.id]: next } }) }}>{bookmark ? '★' : '☆'}</button></div>
     <div className="problem-meta"><span className={`difficulty ${problem.difficulty.toLowerCase()}`}>{problem.difficulty}</span><span>·</span><span>{problem.topic}</span><span>·</span><span>Acceptance 62.4%</span></div>
-    <div className="pills"><button onClick={() => setHint(value => !value)}>💡 Hint</button>{companies.map(item => <button key={item} onClick={() => { setCompany(item); setView('problems') }}>{item}</button>)}</div>
+    <div className="pills"><button onClick={() => setHint(value => !value)}>💡 Hint</button>{companies.map(item => <button key={item} onClick={() => { setCompany(item); setView('problems') }}><CompanyLogo name={item} />{item}</button>)}</div>
     {hint && <div className="hint-box"><b>Hint</b><div>{problem.hint}</div></div>}
     <div className="rich-copy" dangerouslySetInnerHTML={{ __html: problem.description }} />
     <div className="examples">{(problem.examples || []).map((example, index) => <div className="example" key={index}><b>Example {index + 1}</b><div><strong>Input:</strong> {example.input}</div><div><strong>Output:</strong> {example.output}</div>{example.explanation && <div><strong>Explanation:</strong> {example.explanation}</div>}</div>)}</div>
     <h3>Constraints</h3><ul>{(problem.constraints || []).map(item => <li key={item}><code>{item}</code></li>)}</ul>
     <div className="question-feedback"><span>Seen this question in a real interview before?</span><div><button className={seenAnswer === true ? 'selected' : ''} onClick={() => setSeenAnswer(true)}>Yes</button><button className={seenAnswer === false ? 'selected' : ''} onClick={() => setSeenAnswer(false)}>No</button><b>{state.submissions?.[problem.id]?.length || 0}/6</b></div><div className="local-metrics"><span>Local runs <b>{state.submissions?.[problem.id]?.length || 0}</b></span><span>CPU <b>Browser</b></span><span>Data <b>Local</b></span></div></div>
-    <div className="problem-accordions">{['Topics', 'Companies', 'Similar Questions', 'Discussion'].map(section => <div className="accordion" key={section}><button onClick={() => toggleSection(section)}><span>{section === 'Topics' ? '#' : section === 'Companies' ? '@' : section === 'Discussion' ? '?' : '='}</span>{section}{section === 'Discussion' ? ' (0)' : ''}<b>{expandedSections[section] ? '^' : 'v'}</b></button>{expandedSections[section] && <div className="accordion-content">{section === 'Topics' ? problem.topic : section === 'Companies' ? companies.join(', ') || 'No company tags yet.' : section === 'Similar Questions' ? problems.filter(item => item.id !== problem.id && item.topic === problem.topic).slice(0, 4).map(item => <button key={item.id} onClick={() => patch({ currentProblemId: item.id })}>{item.number}. {item.title}</button>) : 'Discussions are stored locally in this version.'}</div>}</div>)}</div>
+    <div className="problem-accordions">{['Topics', 'Companies', 'Similar Questions', 'Discussion'].map(section => <div className="accordion" key={section}><button onClick={() => toggleSection(section)}><span>{section === 'Topics' ? '#' : section === 'Companies' ? '@' : section === 'Discussion' ? '?' : '='}</span>{section}{section === 'Discussion' ? ' (0)' : ''}<b>{expandedSections[section] ? '^' : 'v'}</b></button>{expandedSections[section] && <div className="accordion-content">{section === 'Topics' ? problem.topic : section === 'Companies' ? <div className="company-list">{companies.length ? companies.map(item => <span className="company-tag" key={item}><CompanyLogo name={item} />{item}</span>) : 'No company tags yet.'}</div> : section === 'Similar Questions' ? problems.filter(item => item.id !== problem.id && item.topic === problem.topic).slice(0, 4).map(item => <button key={item.id} onClick={() => patch({ currentProblemId: item.id })}>{item.number}. {item.title}</button>) : 'Discussions are stored locally in this version.'}</div>}</div>)}</div>
     <div className="copyright">Copyright © 2026 YourCode. Open source.</div>
   </div>
 
@@ -243,7 +296,7 @@ export default function Platform() {
       <nav className="tabs problem-tabs">{['Description', 'Editorial & Notes', 'Solutions', 'Submissions'].map(item => <button className={tab === item ? 'active' : ''} onClick={() => setTab(item)} key={item}>{item}</button>)}</nav>
       {tab === 'Description' && description}
       {tab === 'Editorial & Notes' && <div className="notes"><div className="hint-box"><b>Approach hint</b><div>{problem.hint}</div></div><label className="field-label">Your notes<textarea value={state.notes?.[problem.id] || ''} onChange={event => patch({ notes: { ...state.notes, [problem.id]: event.target.value } })} placeholder="Write your intuition, complexity, and review notes…" /></label></div>}
-      {tab === 'Solutions' && <div className="solution"><div className="solution-heading"><b>Starter solution</b><button onClick={resetCode}>Copy to editor</button></div><pre dangerouslySetInnerHTML={{ __html: highlightCode(problem.starterCode?.[language] || '', language) }} /></div>}
+      {tab === 'Solutions' && <div className="solution"><div className="solution-heading"><b>Starter solution</b><button onClick={copySolutionToEditor}>Copy to editor</button></div><pre dangerouslySetInnerHTML={{ __html: highlightCode(problem.starterCode?.[language] || '', language) }} /></div>}
       {tab === 'Submissions' && <div className="submissions"><h3>Submission history</h3>{(state.submissions?.[problem.id] || []).length ? state.submissions[problem.id].map((item, index) => <div key={index}><b className={item.status === 'Accepted' ? 'green' : 'red'}>{item.status}</b><span>{item.language} · {item.passed}/{item.total} · {item.runtimeMs} ms <small>{item.timestamp}</small></span></div>) : <div className="empty">No submissions yet.</div>}</div>}
       <footer className="panel-footer"><button onClick={() => { const next = !bookmark; setBookmark(next); patch({ bookmarks: { ...state.bookmarks, [problem.id]: next } }) }}>{bookmark ? '★ Bookmarked' : '☆ Bookmark'}</button><span>{state.statusByProblem?.[problem.id] || 'Not started'}</span></footer>
     </section>
@@ -252,7 +305,7 @@ export default function Platform() {
         <div className="monaco-editor-body"><Editor className="monaco-editor-shell" width="100%" height="100%" language={language} theme="yourcode-dark" value={code} onChange={value => updateCode(value ?? '')} beforeMount={configureMonacoTheme} onMount={handleEditorMount} loading={<div className="editor-loading">Loading editor...</div>} options={{ fontSize, fontFamily: "'JetBrains Mono', 'Cascadia Code', monospace", lineNumbers: 'on', minimap: { enabled: false }, automaticLayout: true, autoIndent: 'full', tabSize: 4, insertSpaces: true, wordWrap: wordWrap ? 'on' : 'off', scrollBeyondLastLine: false, smoothScrolling: true, renderLineHighlight: 'line', bracketPairColorization: { enabled: true }, quickSuggestions: true, suggestOnTriggerCharacters: true, tabCompletion: 'on', padding: { top: 13, bottom: 12 } }} /></div>
         <div className="execution-status-overlay"><i className={executionStatus} />{executionStatusLabel}</div>
         <div className="editor-cursor-overlay">Ln {cursorPosition.lineNumber}, Col {cursorPosition.column} &middot; {wordWrap ? 'Wrap: on' : 'Wrap: off'}</div>
-        <div className="editor-head"><div className="editor-title"><span className="code-mark">&lt;/&gt;</span><b>Code</b><span className="saved-indicator">● Saved locally</span></div><div className="editor-tools"><select aria-label="Programming language" value={language} onChange={event => { setLanguage(event.target.value); patch({ language: event.target.value }) }}><option value="python">Python3</option><option value="javascript">JavaScript</option></select><span className="tool-divider" /><button title="Decrease font size" onClick={() => setFontSize(size => Math.max(11, size - 1))}>A−</button><button title="Increase font size" onClick={() => setFontSize(size => Math.min(20, size + 1))}>A+</button><button className={wordWrap ? 'tool-active' : ''} title="Toggle word wrap" onClick={() => setWordWrap(value => !value)}>↵</button><button title="Reset code" onClick={resetCode}>⟲</button></div></div>
+        <div className="editor-head"><div className="editor-title"><span className="code-mark">&lt;/&gt;</span><b>Code</b><span className="saved-indicator">{storageError ? '● SQLite unavailable' : '● SQLite · local'}</span></div><div className="editor-tools"><select aria-label="Programming language" value={language} onChange={event => { setLanguage(event.target.value); patch({ language: event.target.value }) }}><option value="python">Python3</option><option value="javascript">JavaScript</option></select><span className="tool-divider" /><button title="Decrease font size" onClick={() => setFontSize(size => Math.max(11, size - 1))}>A−</button><button title="Increase font size" onClick={() => setFontSize(size => Math.min(20, size + 1))}>A+</button><button className={wordWrap ? 'tool-active' : ''} title="Toggle word wrap" onClick={() => setWordWrap(value => !value)}>↵</button><button title="Reset code" onClick={resetCode}>⟲</button></div></div>
         <div className="editor-body" style={{ '--editor-font-size': `${fontSize}px` }}><div className="gutter">{code.split('\n').map((_, index) => <span key={index}>{index + 1}</span>)}</div><div className={`code-editor ${wordWrap ? 'word-wrap' : ''}`}><pre aria-hidden="true" dangerouslySetInnerHTML={{ __html: `${highlightCode(code, language)}\n` }} /><textarea aria-label="Code editor" value={code} onChange={event => updateCode(event.target.value)} onKeyDown={handleEditorKeyDown} spellCheck="false" autoCapitalize="off" autoComplete="off" autoCorrect="off" /></div></div>
         <div className="editor-status"><span>{language === 'python' ? 'Python 3' : 'JavaScript'} <i>•</i> UTF-8</span><span>Ln {code.split('\n').length}, Col 1 <i>•</i> {wordWrap ? 'Wrap: on' : 'Wrap: off'}</span></div>
       </div>
@@ -263,9 +316,11 @@ export default function Platform() {
     </section>
   </main>
 
-  const problemsView = <section className="full-view"><div className="view-heading"><div><div className="eyebrow">YOUR PRACTICE SPACE</div><h2>Problems</h2><p>Pick up where you left off or find your next challenge.</p></div><button className="orange-button" onClick={() => setModal('problem')}>＋ Create problem</button></div><div className="problem-stats"><div><small>Total</small><b>{problems.length}</b></div><div><small>Solved</small><b className="green">{problems.filter(item => state.statusByProblem?.[item.id] === 'Solved').length}</b></div><div><small>Attempted</small><b>{problems.filter(item => state.statusByProblem?.[item.id] === 'Attempted').length}</b></div><div><small>Bookmarked</small><b>{Object.values(state.bookmarks || {}).filter(Boolean).length}</b></div></div><div className="filters"><label className="search-field">⌕ <input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search by title or topic…" /></label><select aria-label="Company filter" value={company} onChange={event => setCompany(event.target.value)}><option value="all">All companies</option>{COMPANY_LIST.map(item => <option key={item}>{item}</option>)}</select><select aria-label="Difficulty filter" value={difficulty} onChange={event => setDifficulty(event.target.value)}><option value="all">All difficulties</option><option>Easy</option><option>Medium</option><option>Hard</option></select><select aria-label="Status filter" value={statusFilter} onChange={event => setStatusFilter(event.target.value)}><option value="all">All status</option><option>Unsolved</option><option>Attempted</option><option>Solved</option></select></div><div className="problem-table"><table><thead><tr><th>Status</th><th>Title</th><th>Difficulty</th><th>Companies</th><th>Topic</th><th /></tr></thead><tbody>{filtered.map(item => <tr key={item.id}><td><span className={`status-dot ${(state.statusByProblem?.[item.id] || '').toLowerCase()}`} />{state.statusByProblem?.[item.id] || 'Unsolved'}</td><td><b>{item.number}. {item.title}</b>{state.bookmarks?.[item.id] && <span className="row-bookmark"> ★</span>}</td><td><span className={`difficulty ${item.difficulty.toLowerCase()}`}>{item.difficulty}</span></td><td>{getProblemCompanies(item).slice(0, 3).join(', ') || '—'}</td><td>{item.topic}</td><td><button onClick={() => { patch({ currentProblemId: item.id }); setView('workspace'); setTab('Description') }}>Solve →</button></td></tr>)}</tbody></table>{filtered.length === 0 && <div className="empty">No problems match these filters.</div>}</div></section>
+  const problemsView = <section className="full-view"><div className="view-heading"><div><div className="eyebrow">YOUR PRACTICE SPACE</div><h2>Problems</h2><p>Pick up where you left off or find your next challenge.</p></div><button className="orange-button" onClick={() => setModal('problem')}>＋ Create problem</button></div><div className="problem-stats"><div><small>Total</small><b>{problems.length}</b></div><div><small>Solved</small><b className="green">{problems.filter(item => state.statusByProblem?.[item.id] === 'Solved').length}</b></div><div><small>Attempted</small><b>{problems.filter(item => state.statusByProblem?.[item.id] === 'Attempted').length}</b></div><div><small>Bookmarked</small><b>{Object.values(state.bookmarks || {}).filter(Boolean).length}</b></div></div><div className="filters"><label className="search-field">⌕ <input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search by title or topic…" /></label><select aria-label="Company filter" value={company} onChange={event => setCompany(event.target.value)}><option value="all">All companies</option>{COMPANY_LIST.map(item => <option key={item}>{item}</option>)}</select><select aria-label="Difficulty filter" value={difficulty} onChange={event => setDifficulty(event.target.value)}><option value="all">All difficulties</option><option>Easy</option><option>Medium</option><option>Hard</option></select><select aria-label="Status filter" value={statusFilter} onChange={event => setStatusFilter(event.target.value)}><option value="all">All status</option><option>Unsolved</option><option>Attempted</option><option>Solved</option></select></div><div className="problem-table"><table><thead><tr><th>Status</th><th>Title</th><th>Difficulty</th><th>Companies</th><th>Topic</th><th /></tr></thead><tbody>{filtered.map(item => <tr key={item.id}><td><span className={`status-dot ${(state.statusByProblem?.[item.id] || '').toLowerCase()}`} />{state.statusByProblem?.[item.id] || 'Unsolved'}</td><td><b>{item.number}. {item.title}</b>{state.bookmarks?.[item.id] && <span className="row-bookmark"> ★</span>}</td><td><span className={`difficulty ${item.difficulty.toLowerCase()}`}>{item.difficulty}</span></td><td><div className="company-list">{getProblemCompanies(item).slice(0, 3).map(name => <span className="company-tag" key={name} title={name}><CompanyLogo name={name} />{name}</span>)}{getProblemCompanies(item).length > 3 && <span className="company-more">+{getProblemCompanies(item).length - 3}</span>}{!getProblemCompanies(item).length && '—'}</div></td><td>{item.topic}</td><td><button onClick={() => { patch({ currentProblemId: item.id }); setView('workspace'); setTab('Description') }}>Solve →</button></td></tr>)}</tbody></table>{filtered.length === 0 && <div className="empty">No problems match these filters.</div>}</div></section>
 
-  const sessionsView = <section className="full-view"><div className="view-heading"><div><div className="eyebrow">YOUR PROGRESS</div><h2>Sessions & Data</h2><p>Your practice history and locally saved workspace.</p></div><div className="session-actions">{timer.running ? <button className="orange-button" onClick={saveSession}>■ Finish session · {timer.formatted}</button> : <button className="orange-button" onClick={startSession}>▶ Start practice session</button>}<button className="secondary-button" onClick={() => setView('workspace')}>← Workspace</button></div></div><div className="stats"><div>Solved<strong>{problems.filter(item => state.statusByProblem?.[item.id] === 'Solved').length}</strong></div><div>Sessions<strong>{state.sessions?.length || 0}</strong></div><div>Submissions<strong>{Object.values(state.submissions || {}).flat().length}</strong></div><div>Storage<strong className="green">Local · active</strong></div></div><div className="session-grid"><div className="session-log"><h3>Practice sessions</h3>{state.sessions?.length ? state.sessions.map(item => <div className="session" key={item.id}><span>{item.title}<small>{item.durationMinutes} min · {item.problemsSolved} solved</small></span><button onClick={() => patch({ sessions: state.sessions.filter(session => session.id !== item.id) })}>Delete</button></div>) : <div className="empty">No sessions saved yet.</div>}</div><div className="backup"><h3>Data backup</h3><p>Export or restore your code, notes, bookmarks, and progress.</p><button onClick={() => exportBackup(state)}>↓ Export backup</button><button onClick={() => backupInput.current?.click()}>↑ Import backup</button><input ref={backupInput} className="backup-input" type="file" accept="application/json,.json" onChange={restoreBackup} /><button className="reset-button" onClick={() => { patch(resetState()); timer.reset(); setLanguage('python'); notify('Local data reset') }}>Reset all data</button></div></div></section>
+  const sessionsView = <section className="full-view"><div className="view-heading"><div><div className="eyebrow">YOUR PROGRESS</div><h2>Sessions & Data</h2><p>Your practice history and locally saved workspace.</p></div><div className="session-actions">{timerRunning ? <button className="orange-button" onClick={saveSession}>■ Finish session · {formattedTime}</button> : <button className="orange-button" onClick={startSession}>▶ Start practice session</button>}<button className="secondary-button" onClick={() => setView('workspace')}>← Workspace</button></div></div><div className="stats"><div>Solved<strong>{problems.filter(item => state.statusByProblem?.[item.id] === 'Solved').length}</strong></div><div>Sessions<strong>{state.sessions?.length || 0}</strong></div><div>Submissions<strong>{Object.values(state.submissions || {}).flat().length}</strong></div><div>Storage<strong className="green">SQLite · local</strong></div></div><div className="session-grid"><div className="session-log"><h3>Practice sessions</h3>{state.sessions?.length ? state.sessions.map(item => <div className="session" key={item.id}><span>{item.title}<small>{item.durationMinutes} min · {item.problemsSolved} solved</small></span><button onClick={() => patch({ sessions: state.sessions.filter(session => session.id !== item.id) })}>Delete</button></div>) : <div className="empty">No sessions saved yet.</div>}</div><div className="backup"><h3>Data backup</h3><p>Export or restore your code, notes, bookmarks, and progress.</p><button onClick={() => exportBackup(state)}>↓ Export backup</button><button onClick={() => backupInput.current?.click()}>↑ Import backup</button><input ref={backupInput} className="backup-input" type="file" accept="application/json,.json" onChange={restoreBackup} /><button className="reset-button" onClick={async () => { try { const reset = await resetState(); setState(reset); setBookmark(false); setCode(''); setResults(null); setRunError(''); resetTimer(); setLanguage('python'); setStorageError(''); notify('Local data reset') } catch (error) { notify(error.message || 'Could not reset local data') } }}>Reset all data</button></div></div></section>
 
-  return <div className="platform">{header}<div className="content">{view === 'workspace' ? workspace : view === 'problems' ? problemsView : sessionsView}</div>{toast && <div className="toast">{toast}</div>}{modal === 'problem' && <div className="modal-bg"><form className="modal" onSubmit={event => { event.preventDefault(); const form = new FormData(event.currentTarget); const title = String(form.get('title')).trim(); if (!title) return; const id = `custom-${Date.now()}`; const fnName = String(form.get('fnName')).trim() || 'solve'; const custom = { id, number: problems.length + 100, title, difficulty: String(form.get('difficulty')), topic: String(form.get('topic')) || 'Custom', companies: [], fnName, paramNames: ['args'], description: `<p>${String(form.get('description')) || 'Solve the problem.'}</p>`, examples: [], constraints: ['Custom user problem'], hint: 'Write your solution.', testCases: [{ args: [1], expected: null }], starterCode: { python: `class Solution:\n    def ${fnName}(self, *args):\n        return None`, javascript: `var ${fnName} = function(...args) { return null; };` } }; patch({ customProblems: [...(state.customProblems || []), custom], currentProblemId: id }); setModal(null); setView('workspace'); notify('Custom problem created') }}><h3>Create a problem</h3><label>Title<input name="title" required /></label><div className="modal-row"><label>Difficulty<select name="difficulty"><option>Easy</option><option>Medium</option><option>Hard</option></select></label><label>Topic<input name="topic" /></label></div><label>Function name<input name="fnName" defaultValue="solve" /></label><label>Description<textarea name="description" /></label><div className="modal-actions"><button type="button" onClick={() => setModal(null)}>Cancel</button><button className="orange-button">Save problem</button></div></form></div>}</div>
+  if (!storageReady) return <div className="platform"><div className="storage-loading">Opening local SQLite database…</div></div>
+
+  return <div className="platform">{header}{storageError && <div className="storage-warning">SQLite storage unavailable: {storageError}</div>}<div className="content">{view === 'workspace' ? workspace : view === 'problems' ? problemsView : sessionsView}</div>{toast && <div className="toast">{toast}</div>}{modal === 'problem' && <div className="modal-bg"><form className="modal" onSubmit={event => { event.preventDefault(); const form = new FormData(event.currentTarget); const title = String(form.get('title')).trim(); if (!title) return; const id = `custom-${Date.now()}`; const fnName = String(form.get('fnName')).trim() || 'solve'; const custom = { id, number: problems.length + 100, title, difficulty: String(form.get('difficulty')), topic: String(form.get('topic')) || 'Custom', companies: [], fnName, paramNames: ['args'], description: `<p>${String(form.get('description')) || 'Solve the problem.'}</p>`, examples: [], constraints: ['Custom user problem'], hint: 'Write your solution.', testCases: [{ args: [1], expected: null }], starterCode: { python: `class Solution:\n    def ${fnName}(self, *args):\n        return None`, javascript: `var ${fnName} = function(...args) { return null; };` } }; patch({ customProblems: [...(state.customProblems || []), custom], currentProblemId: id }); setModal(null); setView('workspace'); notify('Custom problem created') }}><h3>Create a problem</h3><label>Title<input name="title" required /></label><div className="modal-row"><label>Difficulty<select name="difficulty"><option>Easy</option><option>Medium</option><option>Hard</option></select></label><label>Topic<input name="topic" /></label></div><label>Function name<input name="fnName" defaultValue="solve" /></label><label>Description<textarea name="description" /></label><div className="modal-actions"><button type="button" onClick={() => setModal(null)}>Cancel</button><button className="orange-button">Save problem</button></div></form></div>}</div>
 }
