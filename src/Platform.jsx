@@ -1,18 +1,40 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import Editor from '@monaco-editor/react'
 import { COMPANY_LIST, DEFAULT_PROBLEMS, getProblemCompanies } from './data/problems'
 import { useTimer, useToast } from './hooks/useToast'
 import { executeCode } from './utils/executor'
 import { exportBackup, importBackup, loadState, resetState, saveState } from './utils/storage'
-import { highlightCode } from './utils/highlighter'
+import { highlightCode as highlightSolution } from './utils/highlighter'
 import './Platform.css'
 
 const json = value => JSON.stringify(value, null, 2)
 const formatTime = value => `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}`
+const formatInput = (args, names = []) => args.map((value, index) => `${names[index] || `arg${index + 1}`} =\n${JSON.stringify(value)}`).join('\n')
+const formatOutput = value => typeof value === 'string' ? value : JSON.stringify(value) ?? String(value)
+
+const configureMonacoTheme = monaco => monaco.editor.defineTheme('yourcode-dark', {
+  base: 'vs-dark',
+  inherit: true,
+  rules: [],
+  colors: {
+    'editor.background': '#262626',
+    'editorGutter.background': '#262626',
+    'editorLineNumber.foreground': '#737373',
+    'editorLineNumber.activeForeground': '#c6c6c6',
+    'editor.lineHighlightBackground': '#2c2c2c',
+    'editor.selectionBackground': '#3a608566',
+    'editorCursor.foreground': '#f4f4f4',
+    'editorWidget.background': '#303030',
+    'editorSuggestWidget.background': '#303030',
+    'editorSuggestWidget.border': '#454545',
+  },
+})
 
 export default function Platform() {
   const [state, setState] = useState(loadState)
   const [view, setView] = useState('workspace')
   const [tab, setTab] = useState('Description')
+  const highlightCode = tab === 'Solutions' ? highlightSolution : () => ''
   const [bottomTab, setBottomTab] = useState('Test Result')
   const [language, setLanguage] = useState(state.language || 'python')
   const [code, setCode] = useState('')
@@ -25,13 +47,17 @@ export default function Platform() {
   const [hint, setHint] = useState(false)
   const [modal, setModal] = useState(null)
   const [bookmark, setBookmark] = useState(false)
-  const [fontSize, setFontSize] = useState(14)
+  const [fontSize, setFontSize] = useState(16)
   const [wordWrap, setWordWrap] = useState(false)
   const [customCases, setCustomCases] = useState({})
   const [busy, setBusy] = useState(false)
+  const [runError, setRunError] = useState('')
+  const [executionStatus, setExecutionStatus] = useState('idle')
+  const [cursorPosition, setCursorPosition] = useState({ lineNumber: 1, column: 1 })
   const [seenAnswer, setSeenAnswer] = useState(null)
   const [expandedSections, setExpandedSections] = useState({})
   const backupInput = useRef(null)
+  const editorCursorListener = useRef(null)
   const problems = useMemo(() => [...DEFAULT_PROBLEMS, ...(state.customProblems || [])], [state.customProblems])
   const problem = problems.find(item => item.id === state.currentProblemId) || problems[0]
   const testCases = [...(problem.testCases || []), ...(customCases[problem.id] || [])]
@@ -39,11 +65,14 @@ export default function Platform() {
   const timer = useTimer(state.activeSession?.elapsedSeconds || 0)
   const { toast, showToast } = useToast()
 
+  useEffect(() => () => editorCursorListener.current?.dispose(), [])
+
   useEffect(() => {
     const key = `${problem.id}__${language}`
     setCode(state.userCode?.[key] ?? problem.starterCode?.[language] ?? '')
     setBookmark(Boolean(state.bookmarks?.[problem.id]))
     setResults(null)
+    setRunError('')
     setActiveCase(0)
   }, [problem.id, language])
 
@@ -80,8 +109,10 @@ export default function Platform() {
   const run = async submit => {
     setBottomTab('Test Result')
     setBusy(true)
+    setExecutionStatus(language === 'python' ? 'loading' : 'running')
+    setRunError('')
     try {
-      const outcome = await executeCode({ code, language, fnName: problem.fnName, testCases, unordered: problem.id === 'generate-parentheses' })
+      const outcome = await executeCode({ code, language, fnName: problem.fnName, testCases, unordered: problem.id === 'generate-parentheses', onStatus: setExecutionStatus })
       setResults(outcome)
       if (submit) {
         patch({
@@ -95,9 +126,13 @@ export default function Platform() {
       }
       notify(`${outcome.allPassed ? 'Accepted' : 'Wrong answer'} · ${outcome.passed}/${outcome.total}`)
     } catch (error) {
-      notify(error.message || 'Could not run code')
+      const message = error.message || 'Could not run code'
+      setExecutionStatus('error')
+      setRunError(message)
+      notify(message)
     } finally {
       setBusy(false)
+      setExecutionStatus(current => current === 'error' ? current : 'ready')
     }
   }
   const filtered = problems.filter(item => {
@@ -132,16 +167,11 @@ export default function Platform() {
     }
     event.target.value = ''
   }
-  const handleEditorKeyDown = event => {
-    if (event.key !== 'Tab') return
-    event.preventDefault()
-    const textarea = event.currentTarget
-    const { selectionStart, selectionEnd } = textarea
-    const nextCode = `${code.slice(0, selectionStart)}    ${code.slice(selectionEnd)}`
-    updateCode(nextCode)
-    requestAnimationFrame(() => {
-      textarea.setSelectionRange(selectionStart + 4, selectionStart + 4)
-    })
+  const handleEditorMount = editor => {
+    editorCursorListener.current?.dispose()
+    editorCursorListener.current = editor.onDidChangeCursorPosition(({ position }) => setCursorPosition(position))
+    const position = editor.getPosition()
+    if (position) setCursorPosition(position)
   }
   const addTestCase = () => {
     const initial = problem.testCases?.[0] || { args: [], expected: null }
@@ -149,6 +179,16 @@ export default function Platform() {
     setBottomTab('Testcase')
     setActiveCase(testCases.length)
     notify('Custom testcase added')
+  }
+
+  const handleEditorKeyDown = event => {
+    if (event.key !== 'Tab') return
+    event.preventDefault()
+    const textarea = event.currentTarget
+    const { selectionStart, selectionEnd } = textarea
+    const nextCode = `${code.slice(0, selectionStart)}    ${code.slice(selectionEnd)}`
+    updateCode(nextCode)
+    requestAnimationFrame(() => textarea.setSelectionRange(selectionStart + 4, selectionStart + 4))
   }
 
   const header = <header className="platform-header">
@@ -185,9 +225,16 @@ export default function Platform() {
   </div>
 
   const activeResult = results?.results?.[activeCase]
-  const resultPanel = results ? <div className="results">
+  const verdict = results?.allPassed ? 'Accepted' : results?.firstFailed?.error ? (results.firstFailed.errorType === 'SyntaxError' ? 'Syntax Error' : 'Runtime Error') : 'Wrong Answer'
+  const executionStatusLabel = language === 'python'
+    ? ({ idle: 'Python loads on first run', loading: 'Loading Python runtime…', running: 'Running Python…', ready: 'Python ready', error: 'Python runtime error' }[executionStatus] || 'Python ready')
+    : ({ running: 'Running JavaScript…', error: 'JavaScript error' }[executionStatus] || 'JavaScript ready')
+  const resultPanel = runError ? <div className="execution-error"><b>Execution failed</b><p>{runError}</p>{language === 'python' && <small>Python runs locally in a Web Worker. Refresh if the runtime assets could not load.</small>}</div> : results ? <div className="results">
+    <div className="verdict-inline"><b className={results.allPassed ? 'green' : 'red'}>{verdict}</b><span>Runtime: {results.totalMs} ms</span></div>
     <div className="result-summary"><span className={`result-icon ${results.allPassed ? 'pass' : 'fail'}`}>{results.allPassed ? '✓' : '×'}</span><div><b className={results.allPassed ? 'green' : 'red'}>{results.allPassed ? 'Accepted' : 'Wrong Answer'}</b><small>{results.passed}/{results.total} testcases passed · {results.totalMs} ms</small></div></div>
     <div className="case-tabs">{results.results.map((item, index) => <button className={`${activeCase === index ? 'active' : ''} ${item.passed ? 'case-pass' : 'case-fail'}`} onClick={() => setActiveCase(index)} key={item.index}><i /> Case {item.index}</button>)}</div>
+    {activeResult && <div className="result-case-detail"><div><b>Input</b><pre>{formatInput(activeResult.args, problem.paramNames)}</pre></div><div><b>Output</b><pre className={activeResult.passed ? 'output-pass' : 'output-fail'}>{formatOutput(activeResult.error || activeResult.actual)}</pre></div><div><b>Expected</b><pre className="output-pass">{formatOutput(activeResult.expected)}</pre></div>{activeResult.logs?.length > 0 && <div><b>Stdout</b><pre>{activeResult.logs.join('\n')}</pre></div>}{activeResult.stderr?.length > 0 && <div><b>Stderr</b><pre className="output-fail">{activeResult.stderr.join('\n')}</pre></div>}{activeResult.traceback && <details className="execution-traceback"><summary>Show traceback</summary><pre>{activeResult.traceback}</pre></details>}</div>}
+    <button className="contribute-case" onClick={addTestCase}>&#9825; Contribute a testcase</button>
     {activeResult && <div className="case-detail"><div><b>Input</b><pre>{json(activeResult.args)}</pre></div><div><b>Output</b><pre>{json(activeResult.error || activeResult.actual)}</pre></div><div><b>Expected</b><pre>{json(activeResult.expected)}</pre></div></div>}
   </div> : <div className="empty result-empty"><span>▷</span><b>Run your code to see results</b><small>Use the Run button or press Ctrl + Enter</small></div>
 
@@ -202,6 +249,9 @@ export default function Platform() {
     </section>
     <section className="right-column">
       <div className="panel editor">
+        <div className="monaco-editor-body"><Editor className="monaco-editor-shell" width="100%" height="100%" language={language} theme="yourcode-dark" value={code} onChange={value => updateCode(value ?? '')} beforeMount={configureMonacoTheme} onMount={handleEditorMount} loading={<div className="editor-loading">Loading editor...</div>} options={{ fontSize, fontFamily: "'JetBrains Mono', 'Cascadia Code', monospace", lineNumbers: 'on', minimap: { enabled: false }, automaticLayout: true, autoIndent: 'full', tabSize: 4, insertSpaces: true, wordWrap: wordWrap ? 'on' : 'off', scrollBeyondLastLine: false, smoothScrolling: true, renderLineHighlight: 'line', bracketPairColorization: { enabled: true }, quickSuggestions: true, suggestOnTriggerCharacters: true, tabCompletion: 'on', padding: { top: 13, bottom: 12 } }} /></div>
+        <div className="execution-status-overlay"><i className={executionStatus} />{executionStatusLabel}</div>
+        <div className="editor-cursor-overlay">Ln {cursorPosition.lineNumber}, Col {cursorPosition.column} &middot; {wordWrap ? 'Wrap: on' : 'Wrap: off'}</div>
         <div className="editor-head"><div className="editor-title"><span className="code-mark">&lt;/&gt;</span><b>Code</b><span className="saved-indicator">● Saved locally</span></div><div className="editor-tools"><select aria-label="Programming language" value={language} onChange={event => { setLanguage(event.target.value); patch({ language: event.target.value }) }}><option value="python">Python3</option><option value="javascript">JavaScript</option></select><span className="tool-divider" /><button title="Decrease font size" onClick={() => setFontSize(size => Math.max(11, size - 1))}>A−</button><button title="Increase font size" onClick={() => setFontSize(size => Math.min(20, size + 1))}>A+</button><button className={wordWrap ? 'tool-active' : ''} title="Toggle word wrap" onClick={() => setWordWrap(value => !value)}>↵</button><button title="Reset code" onClick={resetCode}>⟲</button></div></div>
         <div className="editor-body" style={{ '--editor-font-size': `${fontSize}px` }}><div className="gutter">{code.split('\n').map((_, index) => <span key={index}>{index + 1}</span>)}</div><div className={`code-editor ${wordWrap ? 'word-wrap' : ''}`}><pre aria-hidden="true" dangerouslySetInnerHTML={{ __html: `${highlightCode(code, language)}\n` }} /><textarea aria-label="Code editor" value={code} onChange={event => updateCode(event.target.value)} onKeyDown={handleEditorKeyDown} spellCheck="false" autoCapitalize="off" autoComplete="off" autoCorrect="off" /></div></div>
         <div className="editor-status"><span>{language === 'python' ? 'Python 3' : 'JavaScript'} <i>•</i> UTF-8</span><span>Ln {code.split('\n').length}, Col 1 <i>•</i> {wordWrap ? 'Wrap: on' : 'Wrap: off'}</span></div>
