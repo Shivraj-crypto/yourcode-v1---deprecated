@@ -43,18 +43,26 @@ const CompanyLogo = ({ name }) => {
 const configureMonacoTheme = monaco => monaco.editor.defineTheme('yourcode-dark', {
   base: 'vs-dark',
   inherit: true,
-  rules: [],
+  rules: [
+    { token: 'comment', foreground: '64748b', fontStyle: 'italic' },
+    { token: 'keyword', foreground: 'f43f5e', fontStyle: 'bold' },
+    { token: 'string', foreground: '34d399' },
+    { token: 'number', foreground: 'fbbf24' },
+    { token: 'type', foreground: '38bdf8' },
+    { token: 'function', foreground: '818cf8' },
+  ],
   colors: {
-    'editor.background': '#262626',
-    'editorGutter.background': '#262626',
-    'editorLineNumber.foreground': '#737373',
-    'editorLineNumber.activeForeground': '#c6c6c6',
-    'editor.lineHighlightBackground': '#2c2c2c',
-    'editor.selectionBackground': '#3a608566',
-    'editorCursor.foreground': '#f4f4f4',
-    'editorWidget.background': '#303030',
-    'editorSuggestWidget.background': '#303030',
-    'editorSuggestWidget.border': '#454545',
+    'editor.background': '#101216',
+    'editorGutter.background': '#101216',
+    'editorLineNumber.foreground': '#475569',
+    'editorLineNumber.activeForeground': '#cbd5e1',
+    'editor.lineHighlightBackground': '#181b22',
+    'editor.selectionBackground': '#2563eb33',
+    'editorCursor.foreground': '#f59e0b',
+    'editorWidget.background': '#171920',
+    'editorSuggestWidget.background': '#171920',
+    'editorSuggestWidget.border': '#2d323f',
+    'editorSuggestWidget.selectedBackground': '#252936',
   },
 })
 
@@ -289,107 +297,1172 @@ export default function Platform() {
     requestAnimationFrame(() => textarea.setSelectionRange(selectionStart + 4, selectionStart + 4))
   }
 
-  const header = <header className="platform-header">
-    <div className="brand-area">
-      <button className="brand" onClick={() => setView('home')}>Your<span>Code</span></button>
-      <span className="header-divider" />
-      <button className="header-link" onClick={() => setView('home')}>⌂ <span>Home</span></button>
-      <button className="header-link" onClick={() => setView('problems')}>☷ <span>Problems</span></button>
-      {!companyPractice && <><button className="icon-button" aria-label="Previous problem" title="Previous problem" onClick={() => moveProblem(-1)}>‹</button><button className="icon-button" aria-label="Next problem" title="Next problem" onClick={() => moveProblem(1)}>›</button><button className="icon-button" aria-label="Random problem" title="Random problem" onClick={() => moveProblem('random')}>⤨</button></>}
-      <span className="problem-crumb">{problem.number}. {problem.title}</span>
-    </div>
-    <div className="header-actions">
-      {view === 'workspace' && <><button className="run-button" onClick={() => run(false)} disabled={busy}>▶ <span>{busy ? 'Running…' : 'Run'}</span><kbd>Ctrl ↵</kbd></button><button className="submit-button" onClick={() => run(true)} disabled={busy}>⇧ <span>Submit</span></button></>}
-      <button className="header-link sessions-link" onClick={() => setView('sessions')}>Sessions <b>{state.sessions?.length || 0}</b></button>
-      <div className="timer-pill"><i className={timerRunning ? 'live' : ''} /><button aria-label={timerRunning ? 'Pause timer' : 'Start timer'} onClick={toggleTimer}>{timerRunning ? 'Ⅱ' : '▶'}</button><b>{formattedTime}</b><button aria-label="Reset timer" onClick={resetTimer}>↻</button></div>
-      <button className="avatar" title="YourCode profile">Y</button>
-    </div>
-  </header>
+  const header = (
+    <header className="platform-header">
+      <div className="header-left">
+        <button className="brand-button" onClick={() => setView('home')} title="YourCode Home">
+          <div className="brand-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="16 18 22 12 16 6" />
+              <polyline points="8 6 2 12 8 18" />
+            </svg>
+          </div>
+          <span className="brand-text">Your<span className="brand-accent">Code</span></span>
+          <span className="brand-badge">Local</span>
+        </button>
+
+        <div className="header-nav-divider" />
+
+        <div className="header-nav-links">
+          <button className={`nav-tab-btn ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span>Home</span>
+          </button>
+          <button className={`nav-tab-btn ${view === 'problems' ? 'active' : ''}`} onClick={() => setView('problems')}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1.5" />
+              <rect x="14" y="3" width="7" height="7" rx="1.5" />
+              <rect x="14" y="14" width="7" height="7" rx="1.5" />
+              <rect x="3" y="14" width="7" height="7" rx="1.5" />
+            </svg>
+            <span>Problems</span>
+          </button>
+        </div>
+
+        {view === 'workspace' && !companyPractice && (
+          <div className="problem-nav-group">
+            <button className="icon-nav-btn" aria-label="Previous problem" title="Previous problem" onClick={() => moveProblem(-1)}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button className="icon-nav-btn" aria-label="Next problem" title="Next problem" onClick={() => moveProblem(1)}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button className="icon-nav-btn" aria-label="Random problem" title="Random problem" onClick={() => moveProblem('random')}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+            </button>
+            <span className="problem-crumb-pill" title={`${problem.number}. ${problem.title}`}>
+              <span className="crumb-num">{problem.number}</span>
+              <span className="crumb-title">{problem.title}</span>
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="header-center">
+        {view === 'workspace' && (
+          <div className="run-controls">
+            <button className="run-button-clean" onClick={() => run(false)} disabled={busy} title="Run Code (Ctrl + Enter)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              <span>{busy ? 'Running…' : 'Run'}</span>
+              <kbd className="shortcut-badge">Ctrl ↵</kbd>
+            </button>
+            <button className="submit-button-clean" onClick={() => run(true)} disabled={busy} title="Submit Solution (Ctrl + Shift + Enter)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span>Submit</span>
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="header-right">
+        <button className={`nav-tab-btn sessions-btn ${view === 'sessions' ? 'active' : ''}`} onClick={() => setView('sessions')}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span className="hide-mobile">Sessions</span>
+          <span className="sessions-badge">{state.sessions?.length || 0}</span>
+        </button>
+
+        <div className="timer-pill-clean">
+          <span className={`timer-pulse-dot ${timerRunning ? 'active' : ''}`} />
+          <button className="timer-btn" aria-label={timerRunning ? 'Pause timer' : 'Start timer'} onClick={toggleTimer} title={timerRunning ? 'Pause' : 'Start'}>
+            {timerRunning ? (
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            ) : (
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            )}
+          </button>
+          <span className="timer-time-display">{formattedTime}</span>
+          <button className="timer-btn" aria-label="Reset timer" onClick={resetTimer} title="Reset">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          </button>
+        </div>
+
+        <div className="avatar-pill" title="YourCode Local Profile">
+          <span>Y</span>
+        </div>
+      </div>
+    </header>
+  )
 
   const toggleSection = section => setExpandedSections(current => ({ ...current, [section]: !current[section] }))
-  const description = <div className="description">
-    <div className="problem-title"><div><div className="problem-number">Problem {problem.number}</div><h1>{problem.title}</h1></div><button className={`bookmark-button ${bookmark ? 'saved' : ''}`} title={bookmark ? 'Remove bookmark' : 'Bookmark problem'} onClick={() => { const next = !bookmark; setBookmark(next); patch({ bookmarks: { ...state.bookmarks, [problem.id]: next } }) }}>{bookmark ? '★' : '☆'}</button></div>
-    <div className="problem-meta"><span className={`difficulty ${problem.difficulty.toLowerCase()}`}>{problem.difficulty}</span><span>·</span><span>{problem.topic}</span><span>·</span><span>Acceptance 62.4%</span></div>
-    <div className="pills"><button onClick={() => setHint(value => !value)}>💡 Hint</button>{companies.map(item => <button key={item} onClick={() => { setCompany(item); setView('problems') }}><CompanyLogo name={item} />{item}</button>)}</div>
-    {hint && <div className="hint-box"><b>Hint</b><div>{problem.hint}</div></div>}
-    <div className="rich-copy" dangerouslySetInnerHTML={{ __html: problem.description }} />
-    <div className="examples">{(problem.examples || []).map((example, index) => <div className="example" key={index}><b>Example {index + 1}</b><div><strong>Input:</strong> {example.input}</div><div><strong>Output:</strong> {example.output}</div>{example.explanation && <div><strong>Explanation:</strong> {example.explanation}</div>}</div>)}</div>
-    <h3>Constraints</h3><ul>{(problem.constraints || []).map(item => <li key={item}><code>{item}</code></li>)}</ul>
-    <div className="question-feedback"><span>Seen this question in a real interview before?</span><div><button className={seenAnswer === true ? 'selected' : ''} onClick={() => setSeenAnswer(true)}>Yes</button><button className={seenAnswer === false ? 'selected' : ''} onClick={() => setSeenAnswer(false)}>No</button><b>{state.submissions?.[problem.id]?.length || 0}/6</b></div><div className="local-metrics"><span>Local runs <b>{state.submissions?.[problem.id]?.length || 0}</b></span><span>CPU <b>Browser</b></span><span>Data <b>Local</b></span></div></div>
-    <div className="problem-accordions">{['Topics', 'Companies', 'Similar Questions', 'Discussion'].map(section => <div className="accordion" key={section}><button onClick={() => toggleSection(section)}><span>{section === 'Topics' ? '#' : section === 'Companies' ? '@' : section === 'Discussion' ? '?' : '='}</span>{section}{section === 'Discussion' ? ' (0)' : ''}<b>{expandedSections[section] ? '^' : 'v'}</b></button>{expandedSections[section] && <div className="accordion-content">{section === 'Topics' ? problem.topic : section === 'Companies' ? <div className="company-list">{companies.length ? companies.map(item => <span className="company-tag" key={item}><CompanyLogo name={item} />{item}</span>) : 'No company tags yet.'}</div> : section === 'Similar Questions' ? problems.filter(item => item.id !== problem.id && item.topic === problem.topic).slice(0, 4).map(item => <button key={item.id} onClick={() => patch({ currentProblemId: item.id })}>{item.number}. {item.title}</button>) : 'Discussions are stored locally in this version.'}</div>}</div>)}</div>
-    <div className="copyright">Copyright © 2026 YourCode. Open source.</div>
-  </div>
+
+  const description = (
+    <div className="description">
+      <div className="problem-title-clean">
+        <div className="title-left">
+          <span className="problem-num-badge">Problem {problem.number}</span>
+          <h1 className="problem-heading">{problem.title}</h1>
+        </div>
+        <button
+          className={`bookmark-btn-clean ${bookmark ? 'saved' : ''}`}
+          title={bookmark ? 'Remove bookmark' : 'Bookmark problem'}
+          onClick={() => {
+            const next = !bookmark
+            setBookmark(next)
+            patch({ bookmarks: { ...state.bookmarks, [problem.id]: next } })
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill={bookmark ? '#f59e0b' : 'none'} stroke={bookmark ? '#f59e0b' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+        </button>
+      </div>
+
+      <div className="problem-meta-clean">
+        <span className={`diff-pill ${problem.difficulty.toLowerCase()}`}>
+          <span className="diff-dot" />
+          {problem.difficulty}
+        </span>
+        <span className="meta-tag">{problem.topic}</span>
+        <span className="meta-tag faint">Acceptance 62.4%</span>
+      </div>
+
+      <div className="pill-row-clean">
+        <button className={`hint-toggle-btn ${hint ? 'active' : ''}`} onClick={() => setHint(value => !value)}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6h8c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"/>
+          </svg>
+          <span>Hint</span>
+        </button>
+        {companies.map(item => (
+          <button key={item} className="company-chip-btn" onClick={() => { setCompany(item); setView('problems') }}>
+            <CompanyLogo name={item} />
+            <span>{item}</span>
+          </button>
+        ))}
+      </div>
+
+      {hint && (
+        <div className="hint-card-clean">
+          <div className="hint-card-header">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6h8c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"/>
+            </svg>
+            <b>Intuition Hint</b>
+          </div>
+          <p>{problem.hint}</p>
+        </div>
+      )}
+
+      <div className="rich-copy" dangerouslySetInnerHTML={{ __html: problem.description }} />
+
+      <div className="examples-section">
+        {(problem.examples || []).map((example, index) => (
+          <div className="example-card-clean" key={index}>
+            <div className="example-card-head">
+              <span className="example-badge">Example {index + 1}</span>
+            </div>
+            <div className="example-body">
+              <div className="example-line">
+                <span className="example-label">Input:</span>
+                <code className="example-code">{example.input}</code>
+              </div>
+              <div className="example-line">
+                <span className="example-label">Output:</span>
+                <code className="example-code">{example.output}</code>
+              </div>
+              {example.explanation && (
+                <div className="example-line">
+                  <span className="example-label">Explanation:</span>
+                  <span className="example-text">{example.explanation}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="constraints-section">
+        <h3>Constraints</h3>
+        <ul className="constraints-list">
+          {(problem.constraints || []).map(item => (
+            <li key={item}>
+              <code>{item}</code>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="question-feedback-clean">
+        <span className="feedback-prompt">Seen this question in a real interview?</span>
+        <div className="feedback-actions">
+          <button className={`poll-btn ${seenAnswer === true ? 'selected' : ''}`} onClick={() => setSeenAnswer(true)}>Yes</button>
+          <button className={`poll-btn ${seenAnswer === false ? 'selected' : ''}`} onClick={() => setSeenAnswer(false)}>No</button>
+          <span className="poll-count">{state.submissions?.[problem.id]?.length || 0} attempts</span>
+        </div>
+        <div className="local-metrics-clean">
+          <span className="metric-pill">Runs <b>{state.submissions?.[problem.id]?.length || 0}</b></span>
+          <span className="metric-pill">Runtime <b>Browser Worker</b></span>
+          <span className="metric-pill">Data <b>SQLite Local</b></span>
+        </div>
+      </div>
+
+      <div className="problem-accordions-clean">
+        {['Topics', 'Companies', 'Similar Questions', 'Discussion'].map(section => (
+          <div className="accordion-clean" key={section}>
+            <button className="accordion-trigger" onClick={() => toggleSection(section)}>
+              <span className="accordion-icon">
+                {section === 'Topics' ? '#' : section === 'Companies' ? '@' : section === 'Discussion' ? '💬' : '☷'}
+              </span>
+              <span className="accordion-title">{section}{section === 'Discussion' ? ' (0)' : ''}</span>
+              <span className={`accordion-chevron ${expandedSections[section] ? 'open' : ''}`}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
+            </button>
+            {expandedSections[section] && (
+              <div className="accordion-drawer">
+                {section === 'Topics' ? (
+                  <span className="topic-chip">{problem.topic}</span>
+                ) : section === 'Companies' ? (
+                  <div className="company-list">
+                    {companies.length ? companies.map(item => (
+                      <span className="company-tag" key={item}><CompanyLogo name={item} />{item}</span>
+                    )) : 'No company tags yet.'}
+                  </div>
+                ) : section === 'Similar Questions' ? (
+                  <div className="similar-list">
+                    {problems.filter(item => item.id !== problem.id && item.topic === problem.topic).slice(0, 4).map(item => (
+                      <button key={item.id} className="similar-btn" onClick={() => patch({ currentProblemId: item.id })}>
+                        <span>{item.number}.</span> {item.title}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="muted-text">Discussions are stored locally in this version.</span>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="panel-copyright">YourCode — Open Source & Local-First</div>
+    </div>
+  )
 
   const activeResult = results?.results?.[activeCase]
   const verdict = results?.allPassed ? 'Accepted' : results?.firstFailed?.error ? (results.firstFailed.errorType === 'SyntaxError' ? 'Syntax Error' : 'Runtime Error') : 'Wrong Answer'
   const executionStatusLabel = language === 'python'
-    ? ({ idle: 'Python loads on first run', loading: 'Loading Python runtime…', running: 'Running Python…', ready: 'Python ready', error: 'Python runtime error' }[executionStatus] || 'Python ready')
-    : ({ running: 'Running JavaScript…', error: 'JavaScript error' }[executionStatus] || 'JavaScript ready')
-  const resultPanel = runError ? <div className="execution-error"><b>Execution failed</b><p>{runError}</p>{language === 'python' && <small>Python runs locally in a Web Worker. Refresh if the runtime assets could not load.</small>}</div> : results ? <div className="results">
-    <div className="verdict-inline"><b className={results.allPassed ? 'green' : 'red'}>{verdict}</b><span>Runtime: {results.totalMs} ms</span></div>
-    <div className="result-summary"><span className={`result-icon ${results.allPassed ? 'pass' : 'fail'}`}>{results.allPassed ? '✓' : '×'}</span><div><b className={results.allPassed ? 'green' : 'red'}>{results.allPassed ? 'Accepted' : 'Wrong Answer'}</b><small>{results.passed}/{results.total} testcases passed · {results.totalMs} ms</small></div></div>
-    <div className="case-tabs">{results.results.map((item, index) => <button className={`${activeCase === index ? 'active' : ''} ${item.passed ? 'case-pass' : 'case-fail'}`} onClick={() => setActiveCase(index)} key={item.index}><i /> Case {item.index}</button>)}</div>
-    {activeResult && <div className="result-case-detail"><div><b>Input</b><pre>{formatInput(activeResult.args, problem.paramNames)}</pre></div><div><b>Output</b><pre className={activeResult.passed ? 'output-pass' : 'output-fail'}>{formatOutput(activeResult.error || activeResult.actual)}</pre></div><div><b>Expected</b><pre className="output-pass">{formatOutput(activeResult.expected)}</pre></div>{activeResult.logs?.length > 0 && <div><b>Stdout</b><pre>{activeResult.logs.join('\n')}</pre></div>}{activeResult.stderr?.length > 0 && <div><b>Stderr</b><pre className="output-fail">{activeResult.stderr.join('\n')}</pre></div>}{activeResult.traceback && <details className="execution-traceback"><summary>Show traceback</summary><pre>{activeResult.traceback}</pre></details>}</div>}
-    <button className="contribute-case" onClick={addTestCase}>&#9825; Contribute a testcase</button>
-    {activeResult && <div className="case-detail"><div><b>Input</b><pre>{json(activeResult.args)}</pre></div><div><b>Output</b><pre>{json(activeResult.error || activeResult.actual)}</pre></div><div><b>Expected</b><pre>{json(activeResult.expected)}</pre></div></div>}
-  </div> : <div className="empty result-empty"><span>▷</span><b>Run your code to see results</b><small>Use the Run button or press Ctrl + Enter</small></div>
+    ? ({ idle: 'Python Worker Idle', loading: 'Loading Pyodide…', running: 'Running Python…', ready: 'Python Ready', error: 'Python Error' }[executionStatus] || 'Python Ready')
+    : ({ running: 'Running JavaScript…', error: 'JavaScript Error' }[executionStatus] || 'JavaScript Ready')
 
-  const workspace = <div className="workspace-shell">{companyPractice && <div className="company-practice-bar"><div className="practice-brand"><CompanyLogo name={companyPractice.company} /><span><small>COMPANY PRACTICE</small><b>{companyPractice.company}</b></span></div><span className="practice-progress">Question {companyPractice.index + 1} of {companyPractice.problemIds.length} <i>·</i> {companyPractice.problemIds.filter(id => state.statusByProblem?.[id] === 'Solved').length} solved</span><div className="practice-actions"><button className="orange-button" onClick={advanceCompanyPractice} disabled={state.statusByProblem?.[problem.id] !== 'Solved' || busy}>{companyPractice.index === companyPractice.problemIds.length - 1 ? 'Finish set' : 'Next question →'}</button><button className="secondary-button" onClick={() => { setCompanyPractice(null); setView('home') }}>Exit practice</button></div></div>}<main className="workspace">
-    <section className="panel left-panel">
-      <nav className="tabs problem-tabs">{['Description', 'Editorial & Notes', 'Solutions', 'Submissions'].map(item => <button className={tab === item ? 'active' : ''} onClick={() => setTab(item)} key={item}>{item}</button>)}</nav>
-      {tab === 'Description' && description}
-      {tab === 'Editorial & Notes' && <div className="notes"><div className="hint-box"><b>Approach hint</b><div>{problem.hint}</div></div><label className="field-label">Your notes<textarea value={state.notes?.[problem.id] || ''} onChange={event => patch({ notes: { ...state.notes, [problem.id]: event.target.value } })} placeholder="Write your intuition, complexity, and review notes…" /></label></div>}
-      {tab === 'Solutions' && <div className="solution"><div className="solution-heading"><b>Starter solution</b><button onClick={copySolutionToEditor}>Copy to editor</button></div><pre dangerouslySetInnerHTML={{ __html: highlightCode(problem.starterCode?.[language] || '', language) }} /></div>}
-      {tab === 'Submissions' && <div className="submissions"><h3>Submission history</h3>{(state.submissions?.[problem.id] || []).length ? state.submissions[problem.id].map((item, index) => <article className="submission-entry" key={`${item.timestamp}-${index}`}><div className="submission-summary"><b className={item.status === 'Accepted' ? 'green' : 'red'}>{item.status}</b><span>{item.language} · {item.passed}/{item.total} · {item.runtimeMs} ms <small>{item.timestamp}</small></span></div><details className="submission-code"><summary>View submitted code</summary><pre><code>{item.code || '(No code was saved for this submission.)'}</code></pre></details></article>) : <div className="empty">No submissions yet.</div>}</div>}
-      <footer className="panel-footer"><button onClick={() => { const next = !bookmark; setBookmark(next); patch({ bookmarks: { ...state.bookmarks, [problem.id]: next } }) }}>{bookmark ? '★ Bookmarked' : '☆ Bookmark'}</button><span>{state.statusByProblem?.[problem.id] || 'Not started'}</span></footer>
-    </section>
-    <section className="right-column">
-      <div className="panel editor">
-        <div className="monaco-editor-body"><Editor className="monaco-editor-shell" width="100%" height="100%" language={language} theme="yourcode-dark" value={code} onChange={value => updateCode(value ?? '')} beforeMount={configureMonacoTheme} onMount={handleEditorMount} loading={<div className="editor-loading">Loading editor...</div>} options={{ fontSize, fontFamily: "'JetBrains Mono', 'Cascadia Code', monospace", lineNumbers: 'on', minimap: { enabled: false }, automaticLayout: true, autoIndent: 'full', tabSize: 4, insertSpaces: true, wordWrap: wordWrap ? 'on' : 'off', scrollBeyondLastLine: false, smoothScrolling: true, renderLineHighlight: 'line', bracketPairColorization: { enabled: true }, quickSuggestions: true, suggestOnTriggerCharacters: true, tabCompletion: 'on', padding: { top: 13, bottom: 12 } }} /></div>
-        <div className="execution-status-overlay"><i className={executionStatus} />{executionStatusLabel}</div>
-        <div className="editor-cursor-overlay">Ln {cursorPosition.lineNumber}, Col {cursorPosition.column} &middot; {wordWrap ? 'Wrap: on' : 'Wrap: off'}</div>
-        <div className="editor-head"><div className="editor-title"><span className="code-mark">&lt;/&gt;</span><b>Code</b><span className="saved-indicator">{storageError ? '● SQLite unavailable' : '● SQLite · local'}</span></div><div className="editor-tools"><select aria-label="Programming language" value={language} onChange={event => { setLanguage(event.target.value); patch({ language: event.target.value }) }}><option value="python">Python3</option><option value="javascript">JavaScript</option></select><span className="tool-divider" /><button title="Decrease font size" onClick={() => setFontSize(size => Math.max(11, size - 1))}>A−</button><button title="Increase font size" onClick={() => setFontSize(size => Math.min(20, size + 1))}>A+</button><button className={wordWrap ? 'tool-active' : ''} title="Toggle word wrap" onClick={() => setWordWrap(value => !value)}>↵</button><button title="Reset code" onClick={resetCode}>⟲</button></div></div>
-        <div className="editor-body" style={{ '--editor-font-size': `${fontSize}px` }}><div className="gutter">{code.split('\n').map((_, index) => <span key={index}>{index + 1}</span>)}</div><div className={`code-editor ${wordWrap ? 'word-wrap' : ''}`}><pre aria-hidden="true" dangerouslySetInnerHTML={{ __html: `${highlightCode(code, language)}\n` }} /><textarea aria-label="Code editor" value={code} onChange={event => updateCode(event.target.value)} onKeyDown={handleEditorKeyDown} spellCheck="false" autoCapitalize="off" autoComplete="off" autoCorrect="off" /></div></div>
-        <div className="editor-status"><span>{language === 'python' ? 'Python 3' : 'JavaScript'} <i>•</i> UTF-8</span><span>Ln {code.split('\n').length}, Col 1 <i>•</i> {wordWrap ? 'Wrap: on' : 'Wrap: off'}</span></div>
+  const resultPanel = runError ? (
+    <div className="execution-error-clean">
+      <div className="error-badge">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <b>Execution failed</b>
       </div>
-      <div className="panel tests">
-        <nav className="tabs test-tabs"><button className={bottomTab === 'Testcase' ? 'active' : ''} onClick={() => setBottomTab('Testcase')}>▣ Testcase</button><button className={bottomTab === 'Test Result' ? 'active' : ''} onClick={() => setBottomTab('Test Result')}>⌁ Test Result {results && <span className={`tab-dot ${results.allPassed ? 'pass' : 'fail'}`} />}</button><button className="add-test" onClick={addTestCase}>＋ Add testcase</button></nav>
-        {bottomTab === 'Testcase' ? <div className="testcase"><div className="case-tabs">{testCases.map((item, index) => <button className={activeCase === index ? 'active' : ''} onClick={() => setActiveCase(index)} key={index}>Case {index + 1}{index >= (problem.testCases || []).length ? ' · Custom' : ''}</button>)}</div>{testCases[activeCase] && <div className="case-detail"><div><b>Input</b><pre>{json(testCases[activeCase].args)}</pre></div><div><b>Expected</b><pre>{json(testCases[activeCase].expected)}</pre></div></div>}</div> : resultPanel}
+      <p className="error-message">{runError}</p>
+      {language === 'python' && <small>Python runs locally via Web Worker. Check syntax or recursion limits.</small>}
+    </div>
+  ) : results ? (
+    <div className="results-clean">
+      <div className="verdict-banner-clean">
+        <div className={`verdict-badge ${results.allPassed ? 'accepted' : 'rejected'}`}>
+          <span className="verdict-icon">{results.allPassed ? '✓' : '×'}</span>
+          <div className="verdict-copy">
+            <b>{verdict}</b>
+            <small>{results.passed}/{results.total} testcases passed</small>
+          </div>
+        </div>
+        <div className="verdict-metrics">
+          <span className="metric-tag">Runtime: <b>{results.totalMs} ms</b></span>
+        </div>
       </div>
-    </section>
-  </main></div>
+
+      <div className="case-tab-bar-clean">
+        {results.results.map((item, index) => (
+          <button
+            className={`case-pill-btn ${activeCase === index ? 'active' : ''} ${item.passed ? 'pass' : 'fail'}`}
+            onClick={() => setActiveCase(index)}
+            key={item.index}
+          >
+            <span className="case-status-icon">{item.passed ? '✓' : '×'}</span>
+            <span>Case {item.index}</span>
+          </button>
+        ))}
+      </div>
+
+      {activeResult && (
+        <div className="result-case-grid-clean">
+          <div className="result-block">
+            <span className="result-label">Input</span>
+            <pre className="code-pre">{formatInput(activeResult.args, problem.paramNames)}</pre>
+          </div>
+          <div className="result-block">
+            <span className="result-label">Your Output</span>
+            <pre className={`code-pre ${activeResult.passed ? 'pass-pre' : 'fail-pre'}`}>
+              {formatOutput(activeResult.error || activeResult.actual)}
+            </pre>
+          </div>
+          <div className="result-block">
+            <span className="result-label">Expected</span>
+            <pre className="code-pre pass-pre">{formatOutput(activeResult.expected)}</pre>
+          </div>
+          {activeResult.logs?.length > 0 && (
+            <div className="result-block full-width">
+              <span className="result-label">Stdout</span>
+              <pre className="code-pre">{activeResult.logs.join('\n')}</pre>
+            </div>
+          )}
+          {activeResult.stderr?.length > 0 && (
+            <div className="result-block full-width">
+              <span className="result-label">Stderr</span>
+              <pre className="code-pre fail-pre">{activeResult.stderr.join('\n')}</pre>
+            </div>
+          )}
+          {activeResult.traceback && (
+            <details className="execution-traceback">
+              <summary>Show traceback</summary>
+              <pre>{activeResult.traceback}</pre>
+            </details>
+          )}
+        </div>
+      )}
+
+      <div className="result-bottom-action">
+        <button className="contribute-case-btn" onClick={addTestCase}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Contribute a custom testcase
+        </button>
+      </div>
+    </div>
+  ) : (
+    <div className="empty-results-clean">
+      <div className="empty-results-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+      </div>
+      <b>Run your code to see results</b>
+      <small>Click "Run" or press <kbd>Ctrl + Enter</kbd></small>
+    </div>
+  )
+
+  const workspace = (
+    <div className="workspace-shell">
+      {companyPractice && (
+        <div className="company-practice-bar-clean">
+          <div className="practice-brand">
+            <CompanyLogo name={companyPractice.company} />
+            <div className="practice-brand-copy">
+              <small>COMPANY PRACTICE</small>
+              <b>{companyPractice.company}</b>
+            </div>
+          </div>
+          <div className="practice-progress-pill">
+            Question <b>{companyPractice.index + 1}</b> of <b>{companyPractice.problemIds.length}</b>
+            <span className="progress-dot-divider">·</span>
+            <span className="solved-pill">{companyPractice.problemIds.filter(id => state.statusByProblem?.[id] === 'Solved').length} Solved</span>
+          </div>
+          <div className="practice-actions">
+            <button className="primary-glow-btn" onClick={advanceCompanyPractice} disabled={state.statusByProblem?.[problem.id] !== 'Solved' || busy}>
+              {companyPractice.index === companyPractice.problemIds.length - 1 ? 'Finish Set' : 'Next Question →'}
+            </button>
+            <button className="ghost-btn" onClick={() => { setCompanyPractice(null); setView('home') }}>
+              Exit Practice
+            </button>
+          </div>
+        </div>
+      )}
+
+      <main className="workspace">
+        <section className="panel left-panel">
+          <nav className="panel-tab-bar">
+            {[
+              { id: 'Description', label: 'Description', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> },
+              { id: 'Editorial & Notes', label: 'Editorial & Notes', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> },
+              { id: 'Solutions', label: 'Solutions', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> },
+              { id: 'Submissions', label: 'Submissions', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
+            ].map(item => (
+              <button
+                className={`panel-tab-btn ${tab === item.id ? 'active' : ''}`}
+                onClick={() => setTab(item.id)}
+                key={item.id}
+              >
+                <span className="tab-svg">{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </nav>
+
+          <div className="left-panel-content">
+            {tab === 'Description' && description}
+            {tab === 'Editorial & Notes' && (
+              <div className="notes-view">
+                <div className="hint-card-clean">
+                  <div className="hint-card-header">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6h8c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"/></svg>
+                    <b>Approach Hint</b>
+                  </div>
+                  <p>{problem.hint}</p>
+                </div>
+                <div className="notes-field-clean">
+                  <label className="field-label-clean">Personal Notes & Time/Space Complexity</label>
+                  <textarea
+                    value={state.notes?.[problem.id] || ''}
+                    onChange={event => patch({ notes: { ...state.notes, [problem.id]: event.target.value } })}
+                    placeholder="Document your intuition, complexity analysis, edge cases, and learnings…"
+                  />
+                </div>
+              </div>
+            )}
+            {tab === 'Solutions' && (
+              <div className="solution-view">
+                <div className="solution-header-clean">
+                  <div>
+                    <b>Reference Starter Solution</b>
+                    <small>Standard solution provided for practice</small>
+                  </div>
+                  <button className="copy-solution-btn" onClick={copySolutionToEditor}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    Copy to Editor
+                  </button>
+                </div>
+                <pre className="solution-pre" dangerouslySetInnerHTML={{ __html: highlightCode(problem.starterCode?.[language] || '', language) }} />
+              </div>
+            )}
+            {tab === 'Submissions' && (
+              <div className="submissions-view">
+                <div className="submissions-header">
+                  <h3>Submission History</h3>
+                  <small>{(state.submissions?.[problem.id] || []).length} recorded locally</small>
+                </div>
+                {(state.submissions?.[problem.id] || []).length ? state.submissions[problem.id].map((item, index) => (
+                  <article className="submission-card-clean" key={`${item.timestamp}-${index}`}>
+                    <div className="submission-card-header">
+                      <span className={`status-chip ${item.status === 'Accepted' ? 'pass' : 'fail'}`}>
+                        {item.status === 'Accepted' ? '✓ Accepted' : '× Wrong Answer'}
+                      </span>
+                      <span className="submission-meta">
+                        {item.language} · {item.passed}/{item.total} passed · {item.runtimeMs} ms
+                        <small>{item.timestamp}</small>
+                      </span>
+                    </div>
+                    <details className="submission-code-drawer">
+                      <summary>View submitted code</summary>
+                      <pre><code>{item.code || '(No code saved)'}</code></pre>
+                    </details>
+                  </article>
+                )) : (
+                  <div className="empty-submissions">
+                    <span>No submissions yet for this problem.</span>
+                    <small>Click "Submit" to test your solution across all testcases.</small>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <footer className="panel-footer-clean">
+            <button
+              className="footer-bookmark-btn"
+              onClick={() => {
+                const next = !bookmark
+                setBookmark(next)
+                patch({ bookmarks: { ...state.bookmarks, [problem.id]: next } })
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill={bookmark ? '#f59e0b' : 'none'} stroke={bookmark ? '#f59e0b' : 'currentColor'} strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <span>{bookmark ? 'Bookmarked' : 'Bookmark'}</span>
+            </button>
+            <span className={`footer-status-badge ${(state.statusByProblem?.[problem.id] || 'unsolved').toLowerCase()}`}>
+              {state.statusByProblem?.[problem.id] || 'Not started'}
+            </span>
+          </footer>
+        </section>
+
+        <section className="right-column">
+          <div className="panel editor">
+            <div className="editor-head-clean">
+              <div className="editor-head-left">
+                <span className="code-tag-badge">&lt;/&gt;</span>
+                <span className="editor-label">Code</span>
+                <div className="lang-select-pill">
+                  <select aria-label="Programming language" value={language} onChange={event => { setLanguage(event.target.value); patch({ language: event.target.value }) }}>
+                    <option value="python">Python 3</option>
+                    <option value="javascript">JavaScript</option>
+                  </select>
+                  <svg className="select-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <span className="sqlite-indicator">
+                  <span className={`sqlite-dot ${storageError ? 'error' : 'ok'}`} />
+                  <span className="sqlite-text">{storageError ? 'SQLite error' : 'SQLite Local'}</span>
+                </span>
+              </div>
+
+              <div className="editor-head-right">
+                <div className="runtime-status-pill">
+                  <span className={`status-pulse-dot ${executionStatus}`} />
+                  <span>{executionStatusLabel}</span>
+                </div>
+                <div className="editor-actions-pill">
+                  <button title="Decrease font size" onClick={() => setFontSize(size => Math.max(11, size - 1))}>A−</button>
+                  <button title="Increase font size" onClick={() => setFontSize(size => Math.min(20, size + 1))}>A+</button>
+                  <span className="action-divider" />
+                  <button className={wordWrap ? 'active' : ''} title="Toggle word wrap" onClick={() => setWordWrap(value => !value)}>↵</button>
+                  <button title="Reset code" onClick={resetCode}>⟲</button>
+                </div>
+              </div>
+            </div>
+
+            <div className="monaco-editor-body">
+              <Editor
+                className="monaco-editor-shell"
+                width="100%"
+                height="100%"
+                language={language}
+                theme="yourcode-dark"
+                value={code}
+                onChange={value => updateCode(value ?? '')}
+                beforeMount={configureMonacoTheme}
+                onMount={handleEditorMount}
+                loading={<div className="editor-loading">Loading Monaco Editor…</div>}
+                options={{
+                  fontSize,
+                  fontFamily: "'JetBrains Mono', 'Cascadia Code', monospace",
+                  lineNumbers: 'on',
+                  minimap: { enabled: false },
+                  automaticLayout: true,
+                  autoIndent: 'full',
+                  tabSize: 4,
+                  insertSpaces: true,
+                  wordWrap: wordWrap ? 'on' : 'off',
+                  scrollBeyondLastLine: false,
+                  smoothScrolling: true,
+                  renderLineHighlight: 'line',
+                  bracketPairColorization: { enabled: true },
+                  quickSuggestions: true,
+                  suggestOnTriggerCharacters: true,
+                  tabCompletion: 'on',
+                  padding: { top: 12, bottom: 12 },
+                }}
+              />
+            </div>
+
+            <div className="editor-cursor-pill">
+              Ln {cursorPosition.lineNumber}, Col {cursorPosition.column} · {wordWrap ? 'Wrap: On' : 'Wrap: Off'}
+            </div>
+          </div>
+
+          <div className="panel tests">
+            <nav className="panel-tab-bar test-panel-tabs">
+              <button
+                className={`panel-tab-btn ${bottomTab === 'Testcase' ? 'active' : ''}`}
+                onClick={() => setBottomTab('Testcase')}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                <span>Testcase</span>
+              </button>
+              <button
+                className={`panel-tab-btn ${bottomTab === 'Test Result' ? 'active' : ''}`}
+                onClick={() => setBottomTab('Test Result')}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <span>Test Result</span>
+                {results && <span className={`tab-dot ${results.allPassed ? 'pass' : 'fail'}`} />}
+              </button>
+              <button className="add-case-btn" onClick={addTestCase}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span>Add Testcase</span>
+              </button>
+            </nav>
+
+            <div className="test-panel-body">
+              {bottomTab === 'Testcase' ? (
+                <div className="testcase-view">
+                  <div className="case-tab-bar-clean">
+                    {testCases.map((item, index) => (
+                      <button
+                        className={`case-pill-btn ${activeCase === index ? 'active' : ''}`}
+                        onClick={() => setActiveCase(index)}
+                        key={index}
+                      >
+                        Case {index + 1}{index >= (problem.testCases || []).length ? ' · Custom' : ''}
+                      </button>
+                    ))}
+                  </div>
+                  {testCases[activeCase] && (
+                    <div className="case-card-grid-clean">
+                      <div className="case-field-block">
+                        <span className="case-field-label">Input</span>
+                        <pre className="code-pre">{json(testCases[activeCase].args)}</pre>
+                      </div>
+                      <div className="case-field-block">
+                        <span className="case-field-label">Expected Output</span>
+                        <pre className="code-pre">{json(testCases[activeCase].expected)}</pre>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                resultPanel
+              )}
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  )
 
   const homeView = (
     <section className="full-view home-view">
-      <header className="home-hero">
+      <header className="home-hero-clean">
         <div className="home-hero-copy">
-          <span className="home-kicker"><i /> COMPANY-WISE INTERVIEW PREP</span>
-          <h1>Pick your target.<br /><em>Build your edge.</em></h1>
-          <p>Explore real practice sets by company, then solve each question in sequence at your own pace.</p>
-          <div className="home-hero-actions"><button className="orange-button" onClick={() => startCompanyPractice(selectedHomeCompany)}>Start {selectedHomeCompany} practice <span>→</span></button><button className="home-resume-button" onClick={() => openProblem(problem.id)}>Resume {problem.number}. {problem.title}</button></div>
+          <div className="home-kicker-clean">
+            <span className="kicker-pulse-dot" />
+            <span>COMPANY-WISE INTERVIEW PREPARATION</span>
+          </div>
+          <h1 className="hero-headline">
+            Pick your target.<br />
+            <span className="hero-gradient-text">Build your edge.</span>
+          </h1>
+          <p className="hero-subtext">
+            Explore curated practice sets tagged by premier technology firms. Run, test, and master patterns directly in your browser with full offline SQLite sync.
+          </p>
+          <div className="home-hero-actions-clean">
+            <button className="primary-glow-btn" onClick={() => startCompanyPractice(selectedHomeCompany)}>
+              <span>Start {selectedHomeCompany} Practice</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button className="resume-btn-clean" onClick={() => openProblem(problem.id)}>
+              <span className="resume-icon">↗</span>
+              <span>Resume #{problem.number} {problem.title}</span>
+            </button>
+          </div>
         </div>
-        <div className="home-hero-stats"><div><small>PROBLEMS SOLVED</small><b>{totalSolved}<span> / {problems.length}</span></b><i style={{ width: `${problems.length ? totalSolved / problems.length * 100 : 0}%` }} /></div><div><small>COMPANIES</small><b>{COMPANY_LIST.length}</b></div><div><small>SUBMISSIONS</small><b>{Object.values(state.submissions || {}).flat().length}</b></div></div>
+
+        <div className="home-hero-stats-clean">
+          <div className="stat-card-glass">
+            <span className="stat-card-label">PROBLEMS SOLVED</span>
+            <div className="stat-card-value">
+              <b>{totalSolved}</b>
+              <span className="stat-total">/ {problems.length}</span>
+            </div>
+            <div className="stat-micro-progress">
+              <div className="micro-fill" style={{ width: `${problems.length ? (totalSolved / problems.length) * 100 : 0}%` }} />
+            </div>
+          </div>
+
+          <div className="stat-card-glass">
+            <span className="stat-card-label">COMPANIES</span>
+            <div className="stat-card-value">
+              <b>{COMPANY_LIST.length}</b>
+              <span className="stat-sub">Tracked</span>
+            </div>
+          </div>
+
+          <div className="stat-card-glass">
+            <span className="stat-card-label">SUBMISSIONS</span>
+            <div className="stat-card-value">
+              <b>{Object.values(state.submissions || {}).flat().length}</b>
+              <span className="stat-sub">Local</span>
+            </div>
+          </div>
+        </div>
       </header>
-      <div className="home-layout">
-        <section className="home-company-panel">
-          <div className="home-section-heading"><div><span className="home-kicker-small">BROWSE THE BANK</span><h2>Choose a company</h2><p>Select a company to view its questions and progress.</p></div><span className="home-company-count">{COMPANY_LIST.length} available</span></div>
-          <label className="home-company-search"><span>⌕</span><input aria-label="Search companies" value={homeSearch} onChange={event => setHomeSearch(event.target.value)} placeholder="Search companies" /></label>
-          <div className="home-company-grid">{visibleHomeCompanies.map(companyName => { const companyQuestions = problems.filter(item => getProblemCompanies(item).includes(companyName)); const solvedCount = companyQuestions.filter(item => state.statusByProblem?.[item.id] === 'Solved').length; return <button className={`home-company-card ${selectedHomeCompany === companyName ? 'selected' : ''}`} key={companyName} onClick={() => setSelectedHomeCompany(companyName)} aria-pressed={selectedHomeCompany === companyName}><CompanyLogo name={companyName} /><span><b>{companyName}</b><small>{companyQuestions.length} questions <i>·</i> {solvedCount} solved</small></span><span className="company-card-arrow">→</span></button>})}{!visibleHomeCompanies.length && <div className="home-no-companies">No companies match “{homeSearch}”.</div>}</div>
+
+      <div className="home-layout-clean">
+        <section className="home-company-panel-clean">
+          <div className="panel-heading-clean">
+            <div>
+              <span className="kicker-subtle">BROWSE BY COMPANY</span>
+              <h2>Target Companies</h2>
+              <p>Select a company to view curated interview problems and progress.</p>
+            </div>
+            <span className="counter-pill">{COMPANY_LIST.length} available</span>
+          </div>
+
+          <div className="search-input-pill">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input
+              aria-label="Search companies"
+              value={homeSearch}
+              onChange={event => setHomeSearch(event.target.value)}
+              placeholder="Filter company sets…"
+            />
+            {homeSearch && (
+              <button className="search-clear-btn" onClick={() => setHomeSearch('')}>×</button>
+            )}
+          </div>
+
+          <div className="home-company-grid-clean">
+            {visibleHomeCompanies.map(companyName => {
+              const companyQuestions = problems.filter(item => getProblemCompanies(item).includes(companyName))
+              const solvedCount = companyQuestions.filter(item => state.statusByProblem?.[item.id] === 'Solved').length
+              const pct = companyQuestions.length ? Math.round((solvedCount / companyQuestions.length) * 100) : 0
+              return (
+                <button
+                  className={`home-company-card-clean ${selectedHomeCompany === companyName ? 'selected' : ''}`}
+                  key={companyName}
+                  onClick={() => setSelectedHomeCompany(companyName)}
+                  aria-pressed={selectedHomeCompany === companyName}
+                >
+                  <div className="company-logo-squircle">
+                    <CompanyLogo name={companyName} />
+                  </div>
+                  <div className="company-card-meta">
+                    <span className="company-name">{companyName}</span>
+                    <span className="company-stats-line">
+                      {companyQuestions.length} questions <span className="dot-sep">·</span> {solvedCount} solved
+                    </span>
+                    <div className="mini-company-progress">
+                      <div className="mini-fill" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                  <span className="company-chevron">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  </span>
+                </button>
+              )
+            })}
+            {!visibleHomeCompanies.length && (
+              <div className="home-no-companies">No companies found matching “{homeSearch}”.</div>
+            )}
+          </div>
         </section>
-        <section className="home-detail-panel">
-          <div className="home-detail-heading"><div className="home-company-title"><CompanyLogo name={selectedHomeCompany} /><div><div className="eyebrow">COMPANY QUESTION SET</div><h2>{selectedHomeCompany}</h2><p>{selectedCompanyProblems.length} curated questions <i>·</i> {selectedCompanySolved} solved</p></div></div><div className="home-detail-actions"><button className="orange-button" onClick={() => startCompanyPractice(selectedHomeCompany)}>{selectedCompanySolved === selectedCompanyProblems.length && selectedCompanyProblems.length ? 'Review set →' : 'Start practice →'}</button><button className="secondary-button" onClick={() => { setCompany(selectedHomeCompany); setSearch(''); setDifficulty('all'); setStatusFilter('all'); setView('problems') }}>Full list</button></div></div>
-          <div className="home-progress"><div><span>Set progress</span><b>{selectedCompanySolved} / {selectedCompanyProblems.length} solved <i>{selectedCompanyProblems.length ? Math.round(selectedCompanySolved / selectedCompanyProblems.length * 100) : 0}%</i></b></div><div className="home-progress-track"><i style={{ width: `${selectedCompanyProblems.length ? selectedCompanySolved / selectedCompanyProblems.length * 100 : 0}%` }} /></div></div>
-          <div className="home-question-list">{selectedCompanyProblems.length ? selectedCompanyProblems.map(item => { const status = state.statusByProblem?.[item.id] || 'Unsolved'; return <button className="home-question-row" key={item.id} onClick={() => openProblem(item.id)}><span className={`status-dot ${status.toLowerCase()}`} /><span className="home-question-number">{String(item.number).padStart(2, '0')}</span><span className="home-question-copy"><b>{item.title}</b><small>{item.topic}</small></span><span className={`difficulty ${item.difficulty.toLowerCase()}`}>{item.difficulty}</span><span className="home-question-status">{status}</span><span className="home-question-arrow">→</span></button>}) : <div className="empty">No questions for this company yet.</div>}</div>
+
+        <section className="home-detail-panel-clean">
+          <div className="detail-panel-header">
+            <div className="detail-company-title">
+              <div className="company-large-logo">
+                <CompanyLogo name={selectedHomeCompany} />
+              </div>
+              <div className="detail-copy">
+                <span className="eyebrow-clean">CURATED QUESTION SET</span>
+                <h2>{selectedHomeCompany}</h2>
+                <p>{selectedCompanyProblems.length} curated questions <span className="dot-sep">·</span> {selectedCompanySolved} solved</p>
+              </div>
+            </div>
+            <div className="detail-actions">
+              <button className="primary-glow-btn" onClick={() => startCompanyPractice(selectedHomeCompany)}>
+                {selectedCompanySolved === selectedCompanyProblems.length && selectedCompanyProblems.length ? 'Review Set →' : 'Start Practice →'}
+              </button>
+              <button
+                className="secondary-btn-clean"
+                onClick={() => {
+                  setCompany(selectedHomeCompany)
+                  setSearch('')
+                  setDifficulty('all')
+                  setStatusFilter('all')
+                  setView('problems')
+                }}
+              >
+                Full List
+              </button>
+            </div>
+          </div>
+
+          <div className="detail-progress-bar-wrap">
+            <div className="progress-labels">
+              <span>Set Completion</span>
+              <b>{selectedCompanySolved} / {selectedCompanyProblems.length} solved <span className="pct-badge">{selectedCompanyProblems.length ? Math.round((selectedCompanySolved / selectedCompanyProblems.length) * 100) : 0}%</span></b>
+            </div>
+            <div className="detail-progress-track">
+              <div className="detail-progress-fill" style={{ width: `${selectedCompanyProblems.length ? (selectedCompanySolved / selectedCompanyProblems.length) * 100 : 0}%` }} />
+            </div>
+          </div>
+
+          <div className="home-question-list-clean">
+            {selectedCompanyProblems.length ? selectedCompanyProblems.map(item => {
+              const status = state.statusByProblem?.[item.id] || 'Unsolved'
+              return (
+                <button className="question-list-row-clean" key={item.id} onClick={() => openProblem(item.id)}>
+                  <span className={`status-bubble ${status.toLowerCase()}`} title={status} />
+                  <span className="question-row-num">{String(item.number).padStart(2, '0')}</span>
+                  <div className="question-row-copy">
+                    <span className="question-row-title">{item.title}</span>
+                    <span className="question-row-topic">{item.topic}</span>
+                  </div>
+                  <span className={`diff-pill ${item.difficulty.toLowerCase()}`}>
+                    <span className="diff-dot" />
+                    {item.difficulty}
+                  </span>
+                  <span className="question-status-label">{status}</span>
+                  <span className="question-row-arrow">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                  </span>
+                </button>
+              )
+            }) : (
+              <div className="empty">No questions for this company yet.</div>
+            )}
+          </div>
         </section>
       </div>
     </section>
   )
 
-  const problemsView = <section className="full-view"><div className="view-heading"><div><div className="eyebrow">YOUR PRACTICE SPACE</div><h2>Problems</h2><p>Pick up where you left off or find your next challenge.</p></div><button className="orange-button" onClick={() => setModal('problem')}>＋ Create problem</button></div><div className="problem-stats"><div><small>Total</small><b>{problems.length}</b></div><div><small>Solved</small><b className="green">{problems.filter(item => state.statusByProblem?.[item.id] === 'Solved').length}</b></div><div><small>Attempted</small><b>{problems.filter(item => state.statusByProblem?.[item.id] === 'Attempted').length}</b></div><div><small>Bookmarked</small><b>{Object.values(state.bookmarks || {}).filter(Boolean).length}</b></div></div><div className="filters"><label className="search-field">⌕ <input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search by title or topic…" /></label><select aria-label="Company filter" value={company} onChange={event => setCompany(event.target.value)}><option value="all">All companies</option>{COMPANY_LIST.map(item => <option key={item}>{item}</option>)}</select><select aria-label="Difficulty filter" value={difficulty} onChange={event => setDifficulty(event.target.value)}><option value="all">All difficulties</option><option>Easy</option><option>Medium</option><option>Hard</option></select><select aria-label="Status filter" value={statusFilter} onChange={event => setStatusFilter(event.target.value)}><option value="all">All status</option><option>Unsolved</option><option>Attempted</option><option>Solved</option></select></div><div className="problem-table"><table><thead><tr><th>Status</th><th>Title</th><th>Difficulty</th><th>Companies</th><th>Topic</th><th /></tr></thead><tbody>{filtered.map(item => <tr key={item.id}><td><span className={`status-dot ${(state.statusByProblem?.[item.id] || '').toLowerCase()}`} />{state.statusByProblem?.[item.id] || 'Unsolved'}</td><td><b>{item.number}. {item.title}</b>{state.bookmarks?.[item.id] && <span className="row-bookmark"> ★</span>}</td><td><span className={`difficulty ${item.difficulty.toLowerCase()}`}>{item.difficulty}</span></td><td><div className="company-list">{getProblemCompanies(item).slice(0, 3).map(name => <span className="company-tag" key={name} title={name}><CompanyLogo name={name} />{name}</span>)}{getProblemCompanies(item).length > 3 && <span className="company-more">+{getProblemCompanies(item).length - 3}</span>}{!getProblemCompanies(item).length && '—'}</div></td><td>{item.topic}</td><td><button onClick={() => openProblem(item.id)}>Solve →</button></td></tr>)}</tbody></table>{filtered.length === 0 && <div className="empty">No problems match these filters.</div>}</div></section>
+  const problemsView = (
+    <section className="full-view problems-view-clean">
+      <div className="view-heading-clean">
+        <div>
+          <span className="kicker-subtle">PROBLEM DIRECTORY</span>
+          <h2>All Problems</h2>
+          <p>Pick up where you left off or search across algorithms and data structures.</p>
+        </div>
+        <button className="primary-glow-btn" onClick={() => setModal('problem')}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Create Problem</span>
+        </button>
+      </div>
 
-  const sessionsView = <section className="full-view"><div className="view-heading"><div><div className="eyebrow">YOUR PROGRESS</div><h2>Sessions & Data</h2><p>Your practice history and locally saved workspace.</p></div><div className="session-actions">{timerRunning ? <button className="orange-button" onClick={saveSession}>■ Finish session · {formattedTime}</button> : <button className="orange-button" onClick={startSession}>▶ Start practice session</button>}<button className="secondary-button" onClick={() => setView('workspace')}>← Workspace</button></div></div><div className="stats"><div>Solved<strong>{problems.filter(item => state.statusByProblem?.[item.id] === 'Solved').length}</strong></div><div>Sessions<strong>{state.sessions?.length || 0}</strong></div><div>Submissions<strong>{Object.values(state.submissions || {}).flat().length}</strong></div><div>Storage<strong className="green">SQLite · local</strong></div></div><div className="session-grid"><div className="session-log"><h3>Practice sessions</h3>{state.sessions?.length ? state.sessions.map(item => <div className="session" key={item.id}><span>{item.title}<small>{item.durationMinutes} min · {item.problemsSolved} solved</small></span><button onClick={() => patch({ sessions: state.sessions.filter(session => session.id !== item.id) })}>Delete</button></div>) : <div className="empty">No sessions saved yet.</div>}</div><div className="backup"><h3>Data backup</h3><p>Export or restore your code, notes, bookmarks, and progress.</p><button onClick={() => exportBackup(state)}>↓ Export backup</button><button onClick={() => backupInput.current?.click()}>↑ Import backup</button><input ref={backupInput} className="backup-input" type="file" accept="application/json,.json" onChange={restoreBackup} /><button className="reset-button" onClick={async () => { try { const reset = await resetState(); setState(reset); setBookmark(false); setCode(''); setResults(null); setRunError(''); resetTimer(); setLanguage('python'); setStorageError(''); notify('Local data reset') } catch (error) { notify(error.message || 'Could not reset local data') } }}>Reset all data</button></div></div></section>
+      <div className="problem-stats-cards-clean">
+        <div className="stat-metric-card">
+          <small>Total Bank</small>
+          <b>{problems.length}</b>
+        </div>
+        <div className="stat-metric-card">
+          <small>Solved</small>
+          <b className="green">{problems.filter(item => state.statusByProblem?.[item.id] === 'Solved').length}</b>
+        </div>
+        <div className="stat-metric-card">
+          <small>Attempted</small>
+          <b className="amber">{problems.filter(item => state.statusByProblem?.[item.id] === 'Attempted').length}</b>
+        </div>
+        <div className="stat-metric-card">
+          <small>Bookmarked</small>
+          <b className="purple">{Object.values(state.bookmarks || {}).filter(Boolean).length}</b>
+        </div>
+      </div>
 
-  if (!storageReady) return <div className="platform"><div className="storage-loading">Opening local SQLite database…</div></div>
+      <div className="filters-clean">
+        <div className="search-field-clean">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search by title, topic, or keyword…" />
+          {search && <button className="clear-btn" onClick={() => setSearch('')}>×</button>}
+        </div>
+        <div className="select-pill-wrap">
+          <select aria-label="Company filter" value={company} onChange={event => setCompany(event.target.value)}>
+            <option value="all">All Companies</option>
+            {COMPANY_LIST.map(item => <option key={item}>{item}</option>)}
+          </select>
+          <svg className="select-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div className="select-pill-wrap">
+          <select aria-label="Difficulty filter" value={difficulty} onChange={event => setDifficulty(event.target.value)}>
+            <option value="all">All Difficulties</option>
+            <option>Easy</option>
+            <option>Medium</option>
+            <option>Hard</option>
+          </select>
+          <svg className="select-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div className="select-pill-wrap">
+          <select aria-label="Status filter" value={statusFilter} onChange={event => setStatusFilter(event.target.value)}>
+            <option value="all">All Status</option>
+            <option>Unsolved</option>
+            <option>Attempted</option>
+            <option>Solved</option>
+          </select>
+          <svg className="select-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
 
-  return <div className="platform">{header}{storageError && <div className="storage-warning">SQLite storage unavailable: {storageError}</div>}<div className="content">{view === 'home' ? homeView : view === 'workspace' ? workspace : view === 'problems' ? problemsView : sessionsView}</div>{toast && <div className="toast">{toast}</div>}{modal === 'problem' && <div className="modal-bg"><form className="modal" onSubmit={event => { event.preventDefault(); const form = new FormData(event.currentTarget); const title = String(form.get('title')).trim(); if (!title) return; const id = `custom-${Date.now()}`; const fnName = String(form.get('fnName')).trim() || 'solve'; const custom = { id, number: problems.length + 100, title, difficulty: String(form.get('difficulty')), topic: String(form.get('topic')) || 'Custom', companies: [], fnName, paramNames: ['args'], description: `<p>${String(form.get('description')) || 'Solve the problem.'}</p>`, examples: [], constraints: ['Custom user problem'], hint: 'Write your solution.', testCases: [{ args: [1], expected: null }], starterCode: { python: `class Solution:\n    def ${fnName}(self, *args):\n        return None`, javascript: `var ${fnName} = function(...args) { return null; };` } }; patch({ customProblems: [...(state.customProblems || []), custom], currentProblemId: id }); setModal(null); setView('workspace'); notify('Custom problem created') }}><h3>Create a problem</h3><label>Title<input name="title" required /></label><div className="modal-row"><label>Difficulty<select name="difficulty"><option>Easy</option><option>Medium</option><option>Hard</option></select></label><label>Topic<input name="topic" /></label></div><label>Function name<input name="fnName" defaultValue="solve" /></label><label>Description<textarea name="description" /></label><div className="modal-actions"><button type="button" onClick={() => setModal(null)}>Cancel</button><button className="orange-button">Save problem</button></div></form></div>}</div>
+      <div className="problem-table-clean">
+        <table>
+          <thead>
+            <tr>
+              <th style={{ width: '100px' }}>Status</th>
+              <th>Title</th>
+              <th style={{ width: '120px' }}>Difficulty</th>
+              <th>Companies</th>
+              <th>Topic</th>
+              <th style={{ width: '90px' }} />
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(item => (
+              <tr key={item.id} onClick={() => openProblem(item.id)}>
+                <td>
+                  <span className={`status-bubble ${(state.statusByProblem?.[item.id] || 'unsolved').toLowerCase()}`} />
+                  <span className="status-cell-text">{state.statusByProblem?.[item.id] || 'Unsolved'}</span>
+                </td>
+                <td>
+                  <div className="title-cell-wrap">
+                    <span className="table-row-num">{item.number}.</span>
+                    <span className="table-row-title">{item.title}</span>
+                    {state.bookmarks?.[item.id] && <span className="table-star">★</span>}
+                  </div>
+                </td>
+                <td>
+                  <span className={`diff-pill ${item.difficulty.toLowerCase()}`}>
+                    <span className="diff-dot" />
+                    {item.difficulty}
+                  </span>
+                </td>
+                <td>
+                  <div className="company-list">
+                    {getProblemCompanies(item).slice(0, 3).map(name => (
+                      <span className="company-tag" key={name} title={name}>
+                        <CompanyLogo name={name} />
+                        {name}
+                      </span>
+                    ))}
+                    {getProblemCompanies(item).length > 3 && (
+                      <span className="company-more">+{getProblemCompanies(item).length - 3}</span>
+                    )}
+                    {!getProblemCompanies(item).length && <span className="muted-dash">—</span>}
+                  </div>
+                </td>
+                <td>
+                  <span className="topic-badge">{item.topic}</span>
+                </td>
+                <td>
+                  <button className="table-solve-btn" onClick={e => { e.stopPropagation(); openProblem(item.id) }}>
+                    Solve →
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {filtered.length === 0 && (
+          <div className="empty-table-clean">
+            <span>No problems match the selected filters.</span>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+
+  const sessionsView = (
+    <section className="full-view sessions-view-clean">
+      <div className="view-heading-clean">
+        <div>
+          <span className="kicker-subtle">ANALYTICS & SYNC</span>
+          <h2>Practice Sessions & Data</h2>
+          <p>Review practice history, active sessions, and local SQLite workspace data.</p>
+        </div>
+        <div className="session-actions-clean">
+          {timerRunning ? (
+            <button className="primary-glow-btn finish" onClick={saveSession}>
+              ■ Finish Session ({formattedTime})
+            </button>
+          ) : (
+            <button className="primary-glow-btn" onClick={startSession}>
+              ▶ Start Practice Session
+            </button>
+          )}
+          <button className="secondary-btn-clean" onClick={() => setView('workspace')}>
+            ← Back to Workspace
+          </button>
+        </div>
+      </div>
+
+      <div className="stats-metric-grid-clean">
+        <div className="stat-metric-card">
+          <small>Total Solved</small>
+          <b>{problems.filter(item => state.statusByProblem?.[item.id] === 'Solved').length}</b>
+        </div>
+        <div className="stat-metric-card">
+          <small>Saved Sessions</small>
+          <b>{state.sessions?.length || 0}</b>
+        </div>
+        <div className="stat-metric-card">
+          <small>Total Runs</small>
+          <b>{Object.values(state.submissions || {}).flat().length}</b>
+        </div>
+        <div className="stat-metric-card">
+          <small>Database Sync</small>
+          <b className="green">SQLite Local</b>
+        </div>
+      </div>
+
+      <div className="session-grid-clean">
+        <div className="session-card-panel">
+          <div className="panel-card-header">
+            <h3>Practice Sessions Log</h3>
+            <span className="count-pill">{state.sessions?.length || 0} logged</span>
+          </div>
+          {state.sessions?.length ? (
+            <div className="sessions-list-scroll">
+              {state.sessions.map(item => (
+                <div className="session-log-item" key={item.id}>
+                  <div className="session-item-copy">
+                    <b>{item.title}</b>
+                    <small>{item.durationMinutes} min · {item.problemsSolved} problems solved</small>
+                  </div>
+                  <button
+                    className="session-del-btn"
+                    onClick={() => patch({ sessions: state.sessions.filter(session => session.id !== item.id) })}
+                    title="Delete session"
+                  >
+                    Delete
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-sessions">
+              <span>No practice sessions saved yet.</span>
+              <small>Click "Start Practice Session" to track your focused coding time.</small>
+            </div>
+          )}
+        </div>
+
+        <div className="session-card-panel">
+          <div className="panel-card-header">
+            <h3>Local Workspace Storage</h3>
+          </div>
+          <p className="backup-desc">
+            Export or restore your code snippets, notes, problem bookmarks, and session history as JSON.
+          </p>
+          <div className="backup-btn-group">
+            <button className="backup-action-btn export" onClick={() => exportBackup(state)}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Export Workspace JSON</span>
+            </button>
+            <button className="backup-action-btn import" onClick={() => backupInput.current?.click()}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Import Workspace JSON</span>
+            </button>
+            <input ref={backupInput} className="backup-input" type="file" accept="application/json,.json" onChange={restoreBackup} />
+            <button
+              className="backup-action-btn reset"
+              onClick={async () => {
+                if (!window.confirm('Are you sure you want to reset all local progress, submissions, and code?')) return
+                try {
+                  const reset = await resetState()
+                  setState(reset)
+                  setBookmark(false)
+                  setCode('')
+                  setResults(null)
+                  setRunError('')
+                  resetTimer()
+                  setLanguage('python')
+                  setStorageError('')
+                  notify('Local data reset')
+                } catch (error) {
+                  notify(error.message || 'Could not reset local data')
+                }
+              }}
+            >
+              Reset All Workspace Data
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+
+  if (!storageReady) {
+    return (
+      <div className="platform">
+        <div className="storage-loading">
+          <div className="spinner-ring" />
+          <span>Opening local SQLite database…</span>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="platform">
+      {header}
+      {storageError && <div className="storage-warning">SQLite storage unavailable: {storageError}</div>}
+      <div className="content">
+        {view === 'home' ? homeView : view === 'workspace' ? workspace : view === 'problems' ? problemsView : sessionsView}
+      </div>
+      {toast && (
+        <div className="toast-clean">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span>{toast}</span>
+        </div>
+      )}
+      {modal === 'problem' && (
+        <div className="modal-bg-clean">
+          <form
+            className="modal-card-clean"
+            onSubmit={event => {
+              event.preventDefault()
+              const form = new FormData(event.currentTarget)
+              const title = String(form.get('title')).trim()
+              if (!title) return
+              const id = `custom-${Date.now()}`
+              const fnName = String(form.get('fnName')).trim() || 'solve'
+              const custom = {
+                id,
+                number: problems.length + 100,
+                title,
+                difficulty: String(form.get('difficulty')),
+                topic: String(form.get('topic')) || 'Custom',
+                companies: [],
+                fnName,
+                paramNames: ['args'],
+                description: `<p>${String(form.get('description')) || 'Solve the problem.'}</p>`,
+                examples: [],
+                constraints: ['Custom user problem'],
+                hint: 'Write your solution.',
+                testCases: [{ args: [1], expected: null }],
+                starterCode: {
+                  python: `class Solution:\n    def ${fnName}(self, *args):\n        return None`,
+                  javascript: `var ${fnName} = function(...args) { return null; };`,
+                },
+              }
+              patch({ customProblems: [...(state.customProblems || []), custom], currentProblemId: id })
+              setModal(null)
+              setView('workspace')
+              notify('Custom problem created')
+            }}
+          >
+            <div className="modal-header-clean">
+              <h3>Create Custom Problem</h3>
+              <button type="button" className="modal-close-btn" onClick={() => setModal(null)}>×</button>
+            </div>
+            <label className="modal-field">
+              <span>Title</span>
+              <input name="title" placeholder="e.g. Reverse Linked List II" required />
+            </label>
+            <div className="modal-row-clean">
+              <label className="modal-field">
+                <span>Difficulty</span>
+                <select name="difficulty">
+                  <option>Easy</option>
+                  <option>Medium</option>
+                  <option>Hard</option>
+                </select>
+              </label>
+              <label className="modal-field">
+                <span>Topic</span>
+                <input name="topic" placeholder="e.g. Dynamic Programming" />
+              </label>
+            </div>
+            <label className="modal-field">
+              <span>Function Name</span>
+              <input name="fnName" defaultValue="solve" placeholder="solve" />
+            </label>
+            <label className="modal-field">
+              <span>Description</span>
+              <textarea name="description" placeholder="Problem description and rules…" />
+            </label>
+            <div className="modal-actions-clean">
+              <button type="button" className="ghost-btn" onClick={() => setModal(null)}>Cancel</button>
+              <button className="primary-glow-btn">Save Problem</button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  )
 }
+
