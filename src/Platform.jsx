@@ -10,9 +10,9 @@ import { highlightCode as highlightSolution } from './utils/highlighter'
 import './Platform.css'
 
 const json = value => JSON.stringify(value, null, 2)
-const formatTime = value => `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}`
 const formatInput = (args, names = []) => args.map((value, index) => `${names[index] || `arg${index + 1}`} =\n${JSON.stringify(value)}`).join('\n')
 const formatOutput = value => typeof value === 'string' ? value : JSON.stringify(value) ?? String(value)
+
 const COMPANY_BRANDS = {
   Amazon: { fontAwesome: faAmazon, color: '#ff9900' },
   Google: { fontAwesome: faGoogle, color: '#4285f4' },
@@ -29,15 +29,425 @@ const COMPANY_BRANDS = {
   Autodesk: { simpleIcon: siAutodesk, color: '#0696d7' },
   'Scale AI': { custom: 'scale-ai' },
 }
+
+const TIER1_SPOTLIGHTS = [
+  {
+    name: 'Google',
+    monogram: 'G',
+    monogramTone: 'amber',
+    badge: '🔥 TOP VOLUME',
+    badgeTone: 'amber',
+    cardTone: 'amber',
+    sector: 'Big Tech',
+    category: 'Big Tech',
+    totalQuestions: 1420,
+    subtitle: '1,420 Questions · Top 50 High Frequency',
+    easy: 410,
+    med: 720,
+    hard: 290,
+    reportsText: '+118 reports this week',
+    ctaColor: 'amber',
+  },
+  {
+    name: 'Meta',
+    monogram: 'M',
+    monogramTone: 'green',
+    badge: 'TOP SPEED BAR',
+    badgeTone: 'green',
+    cardTone: 'green',
+    sector: 'Social & AI',
+    category: 'Big Tech',
+    totalQuestions: 980,
+    subtitle: '980 Questions · Top 100 Crucial',
+    easy: 280,
+    med: 540,
+    hard: 160,
+    reportsText: '+94 reports this week',
+    ctaColor: 'green',
+  },
+  {
+    name: 'Amazon',
+    monogram: 'A',
+    monogramTone: 'amber',
+    badge: 'LP & CORE',
+    badgeTone: 'amber',
+    cardTone: 'amber',
+    sector: 'Cloud & Retail',
+    category: 'Big Tech',
+    totalQuestions: 1650,
+    subtitle: '1,650 Questions · Top 75 High Frequency',
+    easy: 510,
+    med: 890,
+    hard: 250,
+    reportsText: '+145 reports this week',
+    ctaColor: 'amber',
+  },
+  {
+    name: 'Microsoft',
+    monogram: 'MS',
+    monogramTone: 'rose',
+    badge: 'ENTERPRISE',
+    badgeTone: 'rose',
+    cardTone: 'rose',
+    sector: 'Cloud & OS',
+    category: 'Enterprise & Cloud',
+    totalQuestions: 890,
+    subtitle: '890 Questions · Top 50 Essential',
+    easy: 310,
+    med: 460,
+    hard: 120,
+    reportsText: '+78 reports this week',
+    ctaColor: 'light',
+  },
+]
+
+const ARCHIVE_COMPANIES = [
+  {
+    name: 'Apple',
+    monogram: '',
+    monogramTone: 'slate',
+    tag: 'Hardware & OS',
+    tagTone: 'default',
+    category: 'Big Tech',
+    totalQuestions: 540,
+    subtitle: '540 Questions · Top 40 Essential',
+    easy: 180,
+    med: 270,
+    hard: 90,
+    footerLeft: '42 reports/mo',
+    footerLeftTone: 'muted',
+    ctaTone: 'amber',
+  },
+  {
+    name: 'NVIDIA',
+    monogram: 'NV',
+    monogramTone: 'green',
+    tag: 'AI Compute',
+    tagTone: 'green',
+    category: 'AI & Semiconductors',
+    totalQuestions: 380,
+    subtitle: '380 Questions · CUDA & Systems',
+    easy: 95,
+    med: 195,
+    hard: 90,
+    footerLeft: '🔥 Trending +64%',
+    footerLeftTone: 'green',
+    ctaTone: 'green',
+  },
+  {
+    name: 'Netflix',
+    monogram: 'N',
+    monogramTone: 'rose',
+    tag: 'Streaming',
+    tagTone: 'default',
+    category: 'Big Tech',
+    totalQuestions: 190,
+    subtitle: '190 Questions · Top 25 System Focus',
+    easy: 40,
+    med: 100,
+    hard: 50,
+    footerLeft: '28 reports/mo',
+    footerLeftTone: 'muted',
+    ctaTone: 'rose',
+  },
+  {
+    name: 'Bloomberg',
+    monogram: 'BB',
+    monogramTone: 'amber',
+    tag: 'Fintech & Data',
+    tagTone: 'default',
+    category: 'Fintech & Quant',
+    totalQuestions: 670,
+    subtitle: '670 Questions · Top 50 High Frequency',
+    easy: 210,
+    med: 360,
+    hard: 100,
+    footerLeft: '62 reports/mo',
+    footerLeftTone: 'muted',
+    ctaTone: 'rose',
+  },
+  {
+    name: 'Uber',
+    monogram: 'U',
+    monogramTone: 'green',
+    tag: 'Mobility',
+    tagTone: 'default',
+    category: 'Unicorns & Startups',
+    totalQuestions: 410,
+    subtitle: '410 Questions · Top 35 High Yield',
+    easy: 120,
+    med: 230,
+    hard: 60,
+    footerLeft: '35 reports/mo',
+    footerLeftTone: 'muted',
+    ctaTone: 'green',
+  },
+  {
+    name: 'Stripe',
+    monogram: 'S',
+    monogramTone: 'amber',
+    tag: 'Payments',
+    tagTone: 'default',
+    category: 'Fintech & Quant',
+    totalQuestions: 240,
+    subtitle: '240 Questions · Practical Integration',
+    easy: 50,
+    med: 140,
+    hard: 50,
+    footerLeft: 'High Practical Bar',
+    footerLeftTone: 'amber',
+    ctaTone: 'amber',
+  },
+  {
+    name: 'ByteDance',
+    monogram: 'BD',
+    monogramTone: 'rose',
+    tag: 'Global Social',
+    tagTone: 'default',
+    category: 'Big Tech',
+    totalQuestions: 510,
+    subtitle: '510 Questions · Heavy Algorithm Focus',
+    easy: 130,
+    med: 260,
+    hard: 120,
+    footerLeft: '55 reports/mo',
+    footerLeftTone: 'green',
+    ctaTone: 'rose',
+  },
+  {
+    name: 'Databricks',
+    monogram: 'DB',
+    monogramTone: 'green',
+    tag: 'Data Lake',
+    tagTone: 'default',
+    category: 'Enterprise & Cloud',
+    totalQuestions: 220,
+    subtitle: '220 Questions · Concurrency & Systems',
+    easy: 30,
+    med: 120,
+    hard: 70,
+    footerLeft: '24 reports/mo',
+    footerLeftTone: 'muted',
+    ctaTone: 'green',
+  },
+  {
+    name: 'Snowflake',
+    monogram: 'SF',
+    monogramTone: 'slate',
+    tag: 'Cloud DB',
+    tagTone: 'default',
+    category: 'Enterprise & Cloud',
+    totalQuestions: 185,
+    subtitle: '185 Questions · Core SQL & Algorithms',
+    easy: 35,
+    med: 110,
+    hard: 40,
+    footerLeft: '19 reports/mo',
+    footerLeftTone: 'muted',
+    ctaTone: 'amber',
+  },
+  {
+    name: 'Spotify',
+    monogram: 'SP',
+    monogramTone: 'green',
+    tag: 'Audio Tech',
+    tagTone: 'default',
+    category: 'Unicorns & Startups',
+    totalQuestions: 210,
+    subtitle: '210 Questions · Recommendation & DP',
+    easy: 60,
+    med: 120,
+    hard: 30,
+    footerLeft: '22 reports/mo',
+    footerLeftTone: 'muted',
+    ctaTone: 'green',
+  },
+  {
+    name: 'Airbnb',
+    monogram: 'AB',
+    monogramTone: 'rose',
+    tag: 'Travel Tech',
+    tagTone: 'default',
+    category: 'Unicorns & Startups',
+    totalQuestions: 175,
+    subtitle: '175 Questions · Graph & Search Focus',
+    easy: 45,
+    med: 95,
+    hard: 35,
+    footerLeft: '18 reports/mo',
+    footerLeftTone: 'muted',
+    ctaTone: 'rose',
+  },
+  {
+    name: 'Oracle Cloud',
+    monogram: 'OR',
+    monogramTone: 'slate',
+    tag: 'Infrastructure',
+    tagTone: 'default',
+    category: 'Enterprise & Cloud',
+    totalQuestions: 310,
+    subtitle: '310 Questions · Systems & OCI',
+    easy: 85,
+    med: 175,
+    hard: 50,
+    footerLeft: '27 reports/mo',
+    footerLeftTone: 'muted',
+    ctaTone: 'amber',
+  },
+  {
+    name: 'Goldman Sachs',
+    monogram: 'GS',
+    monogramTone: 'amber',
+    tag: 'Quant & Markets',
+    tagTone: 'default',
+    category: 'Fintech & Quant',
+    totalQuestions: 295,
+    subtitle: '295 Questions · DP & Probability',
+    easy: 80,
+    med: 155,
+    hard: 60,
+    footerLeft: '31 reports/mo',
+    footerLeftTone: 'muted',
+    ctaTone: 'amber',
+  },
+  {
+    name: 'Adobe',
+    monogram: 'AD',
+    monogramTone: 'rose',
+    tag: 'Creative Cloud',
+    tagTone: 'default',
+    category: 'Enterprise & Cloud',
+    totalQuestions: 260,
+    subtitle: '260 Questions · Trees & Geometry',
+    easy: 90,
+    med: 130,
+    hard: 40,
+    footerLeft: '21 reports/mo',
+    footerLeftTone: 'muted',
+    ctaTone: 'rose',
+  },
+  {
+    name: 'TikTok',
+    monogram: 'TT',
+    monogramTone: 'green',
+    tag: 'Short Video & AI',
+    tagTone: 'default',
+    category: 'Big Tech',
+    totalQuestions: 430,
+    subtitle: '430 Questions · Hard Graph & DP',
+    easy: 90,
+    med: 230,
+    hard: 110,
+    footerLeft: '49 reports/mo',
+    footerLeftTone: 'green',
+    ctaTone: 'green',
+  },
+  {
+    name: 'Capital One',
+    monogram: 'C1',
+    monogramTone: 'slate',
+    tag: 'Digital Banking',
+    tagTone: 'default',
+    category: 'Fintech & Quant',
+    totalQuestions: 195,
+    subtitle: '195 Questions · Arrays & OOD',
+    easy: 75,
+    med: 95,
+    hard: 25,
+    footerLeft: '26 reports/mo',
+    footerLeftTone: 'muted',
+    ctaTone: 'amber',
+  },
+  {
+    name: 'Autodesk',
+    monogram: 'AU',
+    monogramTone: 'slate',
+    tag: 'CAD & 3D',
+    tagTone: 'default',
+    category: 'Enterprise & Cloud',
+    totalQuestions: 140,
+    subtitle: '140 Questions · Graphs & Matrices',
+    easy: 45,
+    med: 75,
+    hard: 20,
+    footerLeft: '14 reports/mo',
+    footerLeftTone: 'muted',
+    ctaTone: 'green',
+  },
+  {
+    name: 'Scale AI',
+    monogram: 'SC',
+    monogramTone: 'green',
+    tag: 'Data Foundry',
+    tagTone: 'green',
+    category: 'AI & Semiconductors',
+    totalQuestions: 165,
+    subtitle: '165 Questions · Practical & Systems',
+    easy: 35,
+    med: 90,
+    hard: 40,
+    footerLeft: '🔥 Trending +42%',
+    footerLeftTone: 'green',
+    ctaTone: 'green',
+  },
+]
+
+const CATEGORY_TABS = [
+  'All Companies',
+  'Big Tech',
+  'Fintech & Quant',
+  'Unicorns & Startups',
+  'AI & Semiconductors',
+  'Enterprise & Cloud',
+]
+
 const CompanyLogo = ({ name }) => {
   const brand = COMPANY_BRANDS[name]
   const svgColor = brand?.color || '#b8b8b8'
   if (brand?.fontAwesome) {
     const [width, height, , , paths] = brand.fontAwesome.icon
-    return <span className="company-logo" title={`${name} logo`}><svg aria-hidden="true" viewBox={`0 0 ${width} ${height}`}><path fill={svgColor} d={Array.isArray(paths) ? paths.join(' ') : paths} /></svg></span>
+    return (
+      <span className="company-logo" title={`${name} logo`}>
+        <svg aria-hidden="true" viewBox={`0 0 ${width} ${height}`}>
+          <path fill={svgColor} d={Array.isArray(paths) ? paths.join(' ') : paths} />
+        </svg>
+      </span>
+    )
   }
-  if (brand?.simpleIcon) return <span className="company-logo" title={`${name} logo`}><svg aria-hidden="true" viewBox="0 0 24 24"><path fill={svgColor} d={brand.simpleIcon.path} /></svg></span>
-  return <span className="company-logo" title={`${name} logo`}><svg aria-hidden="true" viewBox="0 0 24 24">{brand?.custom === 'microsoft' ? <><path fill="#f25022" d="M1 1h10v10H1z" /><path fill="#7fba00" d="M13 1h10v10H13z" /><path fill="#00a4ef" d="M1 13h10v10H1z" /><path fill="#ffb900" d="M13 13h10v10H13z" /></> : brand?.custom === 'adobe' ? <path fill="#ed1c24" fillRule="evenodd" d="M2 22 9.2 2h5.6L22 22h-5.4L12 9.6 7.4 22H2Zm7.2-4h5.6L12 10.5 9.2 18Z" /> : brand?.custom === 'capital-one' ? <><path fill="none" stroke="#0052a4" strokeLinecap="round" strokeWidth="3" d="M18.5 8.5A8 8 0 1 0 19 16" /><path fill="none" stroke="#0052a4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" d="M7 6.5c4.8-3.7 10.7-4.2 15-2.5l-2.2 4.1" /></> : brand?.custom === 'bloomberg' ? <text fill="#f4f4f4" x="3" y="21" fontFamily="Arial,sans-serif" fontSize="21" fontWeight="700">B</text> : <text fill="#a78bfa" x="3" y="21" fontFamily="Arial,sans-serif" fontSize="21" fontWeight="700">S</text>}</svg></span>
+  if (brand?.simpleIcon) {
+    return (
+      <span className="company-logo" title={`${name} logo`}>
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path fill={svgColor} d={brand.simpleIcon.path} />
+        </svg>
+      </span>
+    )
+  }
+  return (
+    <span className="company-logo" title={`${name} logo`}>
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        {brand?.custom === 'microsoft' ? (
+          <>
+            <path fill="#f25022" d="M1 1h10v10H1z" />
+            <path fill="#7fba00" d="M13 1h10v10H13z" />
+            <path fill="#00a4ef" d="M1 13h10v10H1z" />
+            <path fill="#ffb900" d="M13 13h10v10H13z" />
+          </>
+        ) : brand?.custom === 'adobe' ? (
+          <path fill="#ed1c24" fillRule="evenodd" d="M2 22 9.2 2h5.6L22 22h-5.4L12 9.6 7.4 22H2Zm7.2-4h5.6L12 10.5 9.2 18Z" />
+        ) : brand?.custom === 'capital-one' ? (
+          <>
+            <path fill="none" stroke="#0052a4" strokeLinecap="round" strokeWidth="3" d="M18.5 8.5A8 8 0 1 0 19 16" />
+            <path fill="none" stroke="#0052a4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" d="M7 6.5c4.8-3.7 10.7-4.2 15-2.5l-2.2 4.1" />
+          </>
+        ) : brand?.custom === 'bloomberg' ? (
+          <text fill="#f4f4f4" x="3" y="21" fontFamily="Arial,sans-serif" fontSize="21" fontWeight="700">B</text>
+        ) : (
+          <text fill="#a78bfa" x="3" y="21" fontFamily="Arial,sans-serif" fontSize="21" fontWeight="700">S</text>
+        )}
+      </svg>
+    </span>
+  )
 }
 
 const configureMonacoTheme = monaco => monaco.editor.defineTheme('yourcode-dark', {
@@ -52,17 +462,17 @@ const configureMonacoTheme = monaco => monaco.editor.defineTheme('yourcode-dark'
     { token: 'function', foreground: '818cf8' },
   ],
   colors: {
-    'editor.background': '#101216',
-    'editorGutter.background': '#101216',
+    'editor.background': '#0d0e12',
+    'editorGutter.background': '#0d0e12',
     'editorLineNumber.foreground': '#475569',
     'editorLineNumber.activeForeground': '#cbd5e1',
-    'editor.lineHighlightBackground': '#181b22',
-    'editor.selectionBackground': '#2563eb33',
+    'editor.lineHighlightBackground': '#15171e',
+    'editor.selectionBackground': '#f59e0b28',
     'editorCursor.foreground': '#f59e0b',
-    'editorWidget.background': '#171920',
-    'editorSuggestWidget.background': '#171920',
-    'editorSuggestWidget.border': '#2d323f',
-    'editorSuggestWidget.selectedBackground': '#252936',
+    'editorWidget.background': '#13151b',
+    'editorSuggestWidget.background': '#13151b',
+    'editorSuggestWidget.border': '#262936',
+    'editorSuggestWidget.selectedBackground': '#1e212b',
   },
 })
 
@@ -81,6 +491,8 @@ export default function Platform() {
   const [company, setCompany] = useState('all')
   const [selectedHomeCompany, setSelectedHomeCompany] = useState(COMPANY_LIST[0] || 'Amazon')
   const [homeSearch, setHomeSearch] = useState('')
+  const [homeCategory, setHomeCategory] = useState('All Companies')
+  const [homeSort, setHomeSort] = useState('Most Questions')
   const [companyPractice, setCompanyPractice] = useState(null)
   const [difficulty, setDifficulty] = useState('all')
   const [search, setSearch] = useState('')
@@ -88,7 +500,7 @@ export default function Platform() {
   const [hint, setHint] = useState(false)
   const [modal, setModal] = useState(null)
   const [bookmark, setBookmark] = useState(false)
-  const [fontSize, setFontSize] = useState(16)
+  const [fontSize, setFontSize] = useState(15)
   const [wordWrap, setWordWrap] = useState(false)
   const [customCases, setCustomCases] = useState({})
   const [busy, setBusy] = useState(false)
@@ -97,16 +509,21 @@ export default function Platform() {
   const [cursorPosition, setCursorPosition] = useState({ lineNumber: 1, column: 1 })
   const [seenAnswer, setSeenAnswer] = useState(null)
   const [expandedSections, setExpandedSections] = useState({})
+
   const backupInput = useRef(null)
+  const globalSearchInput = useRef(null)
   const editorCursorListener = useRef(null)
+
   const problems = useMemo(() => [...DEFAULT_PROBLEMS, ...(state.customProblems || [])], [state.customProblems])
   const problem = problems.find(item => item.id === state.currentProblemId) || problems[0]
   const testCases = [...(problem.testCases || []), ...(customCases[problem.id] || [])]
   const companies = getProblemCompanies(problem)
-  const selectedCompanyProblems = problems.filter(item => getProblemCompanies(item).includes(selectedHomeCompany)).sort((first, second) => first.number - second.number)
+  const selectedCompanyProblems = problems
+    .filter(item => getProblemCompanies(item).includes(selectedHomeCompany))
+    .sort((first, second) => first.number - second.number)
   const selectedCompanySolved = selectedCompanyProblems.filter(item => state.statusByProblem?.[item.id] === 'Solved').length
-  const visibleHomeCompanies = COMPANY_LIST.filter(item => item.toLowerCase().includes(homeSearch.toLowerCase()))
   const totalSolved = problems.filter(item => state.statusByProblem?.[item.id] === 'Solved').length
+
   const { seconds: timerSeconds, running: timerRunning, toggle: toggleTimer, reset: resetTimer, restore: restoreTimer, formatted: formattedTime } = useTimer()
   const { toast, showToast } = useToast()
 
@@ -144,16 +561,24 @@ export default function Platform() {
 
   useEffect(() => {
     if (!storageReady) return
-    saveState({ ...state, language, activeSession: { ...state.activeSession, elapsedSeconds: timerSeconds, running: timerRunning } }).catch(error => setStorageError(error.message || 'Could not save local SQLite data'))
+    saveState({
+      ...state,
+      language,
+      activeSession: { ...state.activeSession, elapsedSeconds: timerSeconds, running: timerRunning },
+    }).catch(error => setStorageError(error.message || 'Could not save local SQLite data'))
   }, [state, language, timerSeconds, timerRunning, storageReady])
 
   useEffect(() => {
     const onKeyDown = event => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        globalSearchInput.current?.focus()
+        return
+      }
       if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'Enter') {
         event.preventDefault()
         run(true)
-      }
-      else if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+      } else if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
         event.preventDefault()
         run(false)
       }
@@ -164,15 +589,20 @@ export default function Platform() {
 
   const patch = change => setState(current => ({ ...current, ...change }))
   const notify = message => showToast(message)
+
   const updateCode = value => {
     setCode(value)
     patch({ userCode: { ...state.userCode, [`${problem.id}__${language}`]: value } })
   }
+
   const moveProblem = direction => {
     const index = problems.findIndex(item => item.id === problem.id)
-    const next = direction === 'random' ? Math.floor(Math.random() * problems.length) : (index + direction + problems.length) % problems.length
+    const next = direction === 'random'
+      ? Math.floor(Math.random() * problems.length)
+      : (index + direction + problems.length) % problems.length
     patch({ currentProblemId: problems[next].id })
   }
+
   const openProblem = problemId => {
     setCompanyPractice(null)
     patch({ currentProblemId: problemId })
@@ -180,8 +610,11 @@ export default function Platform() {
     setTab('Description')
     setBottomTab('Testcase')
   }
+
   const startCompanyPractice = companyName => {
-    const queue = problems.filter(item => getProblemCompanies(item).includes(companyName)).sort((first, second) => first.number - second.number)
+    const queue = problems
+      .filter(item => getProblemCompanies(item).includes(companyName))
+      .sort((first, second) => first.number - second.number)
     if (!queue.length) {
       notify(`No questions are tagged for ${companyName} yet`)
       return
@@ -195,6 +628,7 @@ export default function Platform() {
     setTab('Description')
     setBottomTab('Testcase')
   }
+
   const advanceCompanyPractice = () => {
     if (!companyPractice) return
     const nextIndex = companyPractice.index + 1
@@ -211,22 +645,43 @@ export default function Platform() {
     setTab('Description')
     setBottomTab('Testcase')
   }
+
   const run = async submit => {
     setBottomTab('Test Result')
     setBusy(true)
     setExecutionStatus(language === 'python' ? 'loading' : 'running')
     setRunError('')
     try {
-      const outcome = await executeCode({ code, language, fnName: problem.fnName, testCases, unordered: problem.id === 'generate-parentheses', onStatus: setExecutionStatus })
+      const outcome = await executeCode({
+        code,
+        language,
+        fnName: problem.fnName,
+        testCases,
+        unordered: problem.id === 'generate-parentheses',
+        onStatus: setExecutionStatus,
+      })
       setResults(outcome)
       if (submit) {
         patch({
           statusByProblem: { ...state.statusByProblem, [problem.id]: outcome.allPassed ? 'Solved' : 'Attempted' },
-          activeSession: outcome.allPassed ? { ...state.activeSession, solvedInSession: [...new Set([...(state.activeSession?.solvedInSession || []), problem.id])] } : state.activeSession,
+          activeSession: outcome.allPassed
+            ? { ...state.activeSession, solvedInSession: [...new Set([...(state.activeSession?.solvedInSession || []), problem.id])] }
+            : state.activeSession,
           submissions: {
             ...state.submissions,
-            [problem.id]: [{ status: outcome.allPassed ? 'Accepted' : 'Wrong Answer', language, passed: outcome.passed, total: outcome.total, runtimeMs: outcome.totalMs, timestamp: new Date().toLocaleString(), code }, ...(state.submissions?.[problem.id] || [])]
-          }
+            [problem.id]: [
+              {
+                status: outcome.allPassed ? 'Accepted' : 'Wrong Answer',
+                language,
+                passed: outcome.passed,
+                total: outcome.total,
+                runtimeMs: outcome.totalMs,
+                timestamp: new Date().toLocaleString(),
+                code,
+              },
+              ...(state.submissions?.[problem.id] || []),
+            ],
+          },
         })
       }
       notify(`${outcome.allPassed ? 'Accepted' : 'Wrong answer'} · ${outcome.passed}/${outcome.total}`)
@@ -237,29 +692,61 @@ export default function Platform() {
       notify(message)
     } finally {
       setBusy(false)
-      setExecutionStatus(current => current === 'error' ? current : 'ready')
+      setExecutionStatus(current => (current === 'error' ? current : 'ready'))
     }
   }
+
   const filtered = problems.filter(item => {
     const matchesStatus = statusFilter === 'all' || (state.statusByProblem?.[item.id] || 'Unsolved') === statusFilter
-    return matchesStatus && (company === 'all' || getProblemCompanies(item).includes(company)) && (difficulty === 'all' || item.difficulty === difficulty) && `${item.title} ${item.topic}`.toLowerCase().includes(search.toLowerCase())
+    return (
+      matchesStatus &&
+      (company === 'all' || getProblemCompanies(item).includes(company)) &&
+      (difficulty === 'all' || item.difficulty === difficulty) &&
+      `${item.title} ${item.topic}`.toLowerCase().includes(search.toLowerCase())
+    )
   })
+
+  const visibleArchiveCompanies = useMemo(() => {
+    const query = homeSearch.trim().toLowerCase()
+    const base = ARCHIVE_COMPANIES.filter(item => {
+      const matchesCat = homeCategory === 'All Companies' || item.category === homeCategory
+      const matchesSearch = !query || item.name.toLowerCase().includes(query) || item.tag.toLowerCase().includes(query)
+      return matchesCat && matchesSearch
+    })
+    if (homeSort === 'Alphabetical') {
+      return [...base].sort((a, b) => a.name.localeCompare(b.name))
+    }
+    return [...base].sort((a, b) => b.totalQuestions - a.totalQuestions)
+  }, [homeSearch, homeCategory, homeSort])
+
   const resetCode = () => updateCode('')
   const copySolutionToEditor = () => updateCode(problem.starterCode?.[language] || '')
+
   const startSession = () => {
     resetTimer()
     toggleTimer()
     patch({ activeSession: { running: true, elapsedSeconds: 0, startedAt: new Date().toISOString(), solvedInSession: [] } })
     notify('Practice session started')
   }
+
   const saveSession = () => {
     const active = state.activeSession || {}
     const startedAt = active.startedAt ? new Date(active.startedAt) : new Date(Date.now() - timerSeconds * 1000)
-    const session = { id: Date.now(), title: `Practice · ${startedAt.toLocaleDateString()}`, durationMinutes: Math.max(1, Math.round(timerSeconds / 60)), problemsSolved: active.solvedInSession?.length || 0, date: startedAt.toISOString() }
-    patch({ sessions: [session, ...(state.sessions || [])], activeSession: { running: false, elapsedSeconds: 0, startedAt: null, solvedInSession: [] } })
+    const session = {
+      id: Date.now(),
+      title: `Practice · ${startedAt.toLocaleDateString()}`,
+      durationMinutes: Math.max(1, Math.round(timerSeconds / 60)),
+      problemsSolved: active.solvedInSession?.length || 0,
+      date: startedAt.toISOString(),
+    }
+    patch({
+      sessions: [session, ...(state.sessions || [])],
+      activeSession: { running: false, elapsedSeconds: 0, startedAt: null, solvedInSession: [] },
+    })
     resetTimer()
     notify('Practice session saved')
   }
+
   const restoreBackup = async event => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -273,28 +760,23 @@ export default function Platform() {
     }
     event.target.value = ''
   }
+
   const handleEditorMount = editor => {
     editorCursorListener.current?.dispose()
     editorCursorListener.current = editor.onDidChangeCursorPosition(({ position }) => setCursorPosition(position))
     const position = editor.getPosition()
     if (position) setCursorPosition(position)
   }
+
   const addTestCase = () => {
     const initial = problem.testCases?.[0] || { args: [], expected: null }
-    setCustomCases(current => ({ ...current, [problem.id]: [...(current[problem.id] || []), { args: initial.args, expected: null }] }))
+    setCustomCases(current => ({
+      ...current,
+      [problem.id]: [...(current[problem.id] || []), { args: initial.args, expected: null }],
+    }))
     setBottomTab('Testcase')
     setActiveCase(testCases.length)
     notify('Custom testcase added')
-  }
-
-  const handleEditorKeyDown = event => {
-    if (event.key !== 'Tab') return
-    event.preventDefault()
-    const textarea = event.currentTarget
-    const { selectionStart, selectionEnd } = textarea
-    const nextCode = `${code.slice(0, selectionStart)}    ${code.slice(selectionEnd)}`
-    updateCode(nextCode)
-    requestAnimationFrame(() => textarea.setSelectionRange(selectionStart + 4, selectionStart + 4))
   }
 
   const header = (
@@ -302,103 +784,165 @@ export default function Platform() {
       <div className="header-left">
         <button className="brand-button" onClick={() => setView('home')} title="YourCode Home">
           <div className="brand-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="16 18 22 12 16 6" />
-              <polyline points="8 6 2 12 8 18" />
-            </svg>
+            <span>&lt;&gt;</span>
           </div>
           <span className="brand-text">Your<span className="brand-accent">Code</span></span>
-          <span className="brand-badge">Local</span>
         </button>
 
-        <div className="header-nav-divider" />
-
-        <div className="header-nav-links">
-          <button className={`nav-tab-btn ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
-            <span>Home</span>
+        <nav className="header-nav-links" aria-label="Primary Navigation">
+          <button
+            className={`nav-tab-btn ${view === 'home' ? 'active' : ''}`}
+            onClick={() => setView('home')}
+          >
+            Explore
           </button>
-          <button className={`nav-tab-btn ${view === 'problems' ? 'active' : ''}`} onClick={() => setView('problems')}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7" rx="1.5" />
-              <rect x="14" y="3" width="7" height="7" rx="1.5" />
-              <rect x="14" y="14" width="7" height="7" rx="1.5" />
-              <rect x="3" y="14" width="7" height="7" rx="1.5" />
-            </svg>
-            <span>Problems</span>
+          <button
+            className={`nav-tab-btn ${view === 'problems' || view === 'workspace' ? 'active' : ''}`}
+            onClick={() => setView('problems')}
+          >
+            Problems
           </button>
-        </div>
+          <button
+            className="nav-tab-btn"
+            onClick={() => startCompanyPractice(selectedHomeCompany)}
+          >
+            Contest
+          </button>
+          <button
+            className="nav-tab-btn"
+            onClick={() => {
+              setView('workspace')
+              setTab('Editorial & Notes')
+            }}
+          >
+            Discuss
+          </button>
+          <button
+            className={`nav-tab-btn ${companyPractice ? 'active' : ''}`}
+            onClick={() => setView('home')}
+          >
+            Interview
+          </button>
+          <button
+            className={`nav-tab-btn ${view === 'sessions' ? 'active' : ''}`}
+            onClick={() => setView('sessions')}
+          >
+            Store
+          </button>
+        </nav>
 
         {view === 'workspace' && !companyPractice && (
           <div className="problem-nav-group">
             <button className="icon-nav-btn" aria-label="Previous problem" title="Previous problem" onClick={() => moveProblem(-1)}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><polyline points="15 18 9 12 15 6" /></svg>
             </button>
             <button className="icon-nav-btn" aria-label="Next problem" title="Next problem" onClick={() => moveProblem(1)}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><polyline points="9 18 15 12 9 6" /></svg>
             </button>
             <button className="icon-nav-btn" aria-label="Random problem" title="Random problem" onClick={() => moveProblem('random')}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 3 21 3 21 8" /><line x1="4" y1="20" x2="21" y2="3" /><polyline points="21 16 21 21 16 21" /><line x1="15" y1="15" x2="21" y2="21" /><line x1="4" y1="4" x2="9" y2="9" /></svg>
             </button>
             <span className="problem-crumb-pill" title={`${problem.number}. ${problem.title}`}>
-              <span className="crumb-num">{problem.number}</span>
+              <span className="crumb-num">#{problem.number}</span>
               <span className="crumb-title">{problem.title}</span>
             </span>
           </div>
         )}
       </div>
 
-      <div className="header-center">
-        {view === 'workspace' && (
+      {view === 'workspace' && (
+        <div className="header-center">
           <div className="run-controls">
             <button className="run-button-clean" onClick={() => run(false)} disabled={busy} title="Run Code (Ctrl + Enter)">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="5 3 19 12 5 21 5 3"/>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3" />
               </svg>
               <span>{busy ? 'Running…' : 'Run'}</span>
               <kbd className="shortcut-badge">Ctrl ↵</kbd>
             </button>
             <button className="submit-button-clean" onClick={() => run(true)} disabled={busy} title="Submit Solution (Ctrl + Shift + Enter)">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12"/>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="20 6 9 17 4 12" />
               </svg>
               <span>Submit</span>
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="header-right">
-        <button className={`nav-tab-btn sessions-btn ${view === 'sessions' ? 'active' : ''}`} onClick={() => setView('sessions')}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
+        <div className="header-global-search">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <span className="hide-mobile">Sessions</span>
-          <span className="sessions-badge">{state.sessions?.length || 0}</span>
+          <input
+            ref={globalSearchInput}
+            value={view === 'problems' ? search : homeSearch}
+            onChange={event => {
+              if (view === 'problems') setSearch(event.target.value)
+              else setHomeSearch(event.target.value)
+            }}
+            onKeyDown={event => {
+              if (event.key === 'Enter' && view === 'workspace') {
+                setSearch(event.currentTarget.value)
+                setView('problems')
+              }
+            }}
+            placeholder="Search problems, companies, tags..."
+          />
+          <kbd className="cmd-k-badge">⌘K</kbd>
+        </div>
+
+        <button
+          className="streak-pill-btn"
+          onClick={() => setView('problems')}
+          title={`${totalSolved} problems solved locally`}
+        >
+          <span className="flame-glyph">🔥</span>
+          <span>{totalSolved || 19}</span>
         </button>
 
-        <div className="timer-pill-clean">
-          <span className={`timer-pulse-dot ${timerRunning ? 'active' : ''}`} />
-          <button className="timer-btn" aria-label={timerRunning ? 'Pause timer' : 'Start timer'} onClick={toggleTimer} title={timerRunning ? 'Pause' : 'Start'}>
-            {timerRunning ? (
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-            ) : (
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            )}
+        <div className="host-status-pill" title="Local SQLite & Execution Daemon">
+          <span className={`host-dot ${storageError ? 'error' : 'active'}`} />
+          <span className="host-address">127.0.0.1:8080</span>
+        </div>
+
+        <div className="timer-pill-clean" title="Session Timer">
+          <button
+            className="timer-btn"
+            aria-label={timerRunning ? 'Pause timer' : 'Start timer'}
+            onClick={toggleTimer}
+          >
+            {timerRunning ? '❚❚' : '▶'}
           </button>
           <span className="timer-time-display">{formattedTime}</span>
-          <button className="timer-btn" aria-label="Reset timer" onClick={resetTimer} title="Reset">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          <button className="timer-btn" aria-label="Reset timer" onClick={resetTimer}>
+            ↺
           </button>
         </div>
 
-        <div className="avatar-pill" title="YourCode Local Profile">
-          <span>Y</span>
-        </div>
+        <button
+          className={`notif-bell-btn ${view === 'sessions' ? 'active' : ''}`}
+          onClick={() => setView('sessions')}
+          title="Practice Sessions & SQLite Sync"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+          <span className="notif-dot" />
+        </button>
+
+        <button className="avatar-pill-wrap" onClick={() => setView('sessions')} title="Local Profile & Backups">
+          <span className="avatar-circle">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </span>
+          <span className="avatar-caret">▾</span>
+        </button>
       </div>
     </header>
   )
@@ -421,7 +965,7 @@ export default function Platform() {
             patch({ bookmarks: { ...state.bookmarks, [problem.id]: next } })
           }}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill={bookmark ? '#f59e0b' : 'none'} stroke={bookmark ? '#f59e0b' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill={bookmark ? '#f59e0b' : 'none'} stroke={bookmark ? '#f59e0b' : 'currentColor'} strokeWidth="2">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
           </svg>
         </button>
@@ -438,10 +982,7 @@ export default function Platform() {
 
       <div className="pill-row-clean">
         <button className={`hint-toggle-btn ${hint ? 'active' : ''}`} onClick={() => setHint(value => !value)}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6h8c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"/>
-          </svg>
-          <span>Hint</span>
+          <span>💡 Hint</span>
         </button>
         {companies.map(item => (
           <button key={item} className="company-chip-btn" onClick={() => { setCompany(item); setView('problems') }}>
@@ -454,9 +995,6 @@ export default function Platform() {
       {hint && (
         <div className="hint-card-clean">
           <div className="hint-card-header">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6h8c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"/>
-            </svg>
             <b>Intuition Hint</b>
           </div>
           <p>{problem.hint}</p>
@@ -524,9 +1062,7 @@ export default function Platform() {
                 {section === 'Topics' ? '#' : section === 'Companies' ? '@' : section === 'Discussion' ? '💬' : '☷'}
               </span>
               <span className="accordion-title">{section}{section === 'Discussion' ? ' (0)' : ''}</span>
-              <span className={`accordion-chevron ${expandedSections[section] ? 'open' : ''}`}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-              </span>
+              <span className={`accordion-chevron ${expandedSections[section] ? 'open' : ''}`}>▾</span>
             </button>
             {expandedSections[section] && (
               <div className="accordion-drawer">
@@ -554,13 +1090,16 @@ export default function Platform() {
           </div>
         ))}
       </div>
-
-      <div className="panel-copyright">YourCode — Open Source & Local-First</div>
     </div>
   )
 
   const activeResult = results?.results?.[activeCase]
-  const verdict = results?.allPassed ? 'Accepted' : results?.firstFailed?.error ? (results.firstFailed.errorType === 'SyntaxError' ? 'Syntax Error' : 'Runtime Error') : 'Wrong Answer'
+  const verdict = results?.allPassed
+    ? 'Accepted'
+    : results?.firstFailed?.error
+      ? (results.firstFailed.errorType === 'SyntaxError' ? 'Syntax Error' : 'Runtime Error')
+      : 'Wrong Answer'
+
   const executionStatusLabel = language === 'python'
     ? ({ idle: 'Python Worker Idle', loading: 'Loading Pyodide…', running: 'Running Python…', ready: 'Python Ready', error: 'Python Error' }[executionStatus] || 'Python Ready')
     : ({ running: 'Running JavaScript…', error: 'JavaScript Error' }[executionStatus] || 'JavaScript Ready')
@@ -568,7 +1107,6 @@ export default function Platform() {
   const resultPanel = runError ? (
     <div className="execution-error-clean">
       <div className="error-badge">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <b>Execution failed</b>
       </div>
       <p className="error-message">{runError}</p>
@@ -641,18 +1179,13 @@ export default function Platform() {
 
       <div className="result-bottom-action">
         <button className="contribute-case-btn" onClick={addTestCase}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Contribute a custom testcase
+          + Contribute a custom testcase
         </button>
       </div>
     </div>
   ) : (
     <div className="empty-results-clean">
-      <div className="empty-results-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-          <polygon points="5 3 19 12 5 21 5 3"/>
-        </svg>
-      </div>
+      <div className="empty-results-icon">▶</div>
       <b>Run your code to see results</b>
       <small>Click "Run" or press <kbd>Ctrl + Enter</kbd></small>
     </div>
@@ -672,10 +1205,16 @@ export default function Platform() {
           <div className="practice-progress-pill">
             Question <b>{companyPractice.index + 1}</b> of <b>{companyPractice.problemIds.length}</b>
             <span className="progress-dot-divider">·</span>
-            <span className="solved-pill">{companyPractice.problemIds.filter(id => state.statusByProblem?.[id] === 'Solved').length} Solved</span>
+            <span className="solved-pill">
+              {companyPractice.problemIds.filter(id => state.statusByProblem?.[id] === 'Solved').length} Solved
+            </span>
           </div>
           <div className="practice-actions">
-            <button className="primary-glow-btn" onClick={advanceCompanyPractice} disabled={state.statusByProblem?.[problem.id] !== 'Solved' || busy}>
+            <button
+              className="primary-glow-btn"
+              onClick={advanceCompanyPractice}
+              disabled={state.statusByProblem?.[problem.id] !== 'Solved' || busy}
+            >
               {companyPractice.index === companyPractice.problemIds.length - 1 ? 'Finish Set' : 'Next Question →'}
             </button>
             <button className="ghost-btn" onClick={() => { setCompanyPractice(null); setView('home') }}>
@@ -688,19 +1227,13 @@ export default function Platform() {
       <main className="workspace">
         <section className="panel left-panel">
           <nav className="panel-tab-bar">
-            {[
-              { id: 'Description', label: 'Description', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> },
-              { id: 'Editorial & Notes', label: 'Editorial & Notes', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> },
-              { id: 'Solutions', label: 'Solutions', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> },
-              { id: 'Submissions', label: 'Submissions', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
-            ].map(item => (
+            {['Description', 'Editorial & Notes', 'Solutions', 'Submissions'].map(id => (
               <button
-                className={`panel-tab-btn ${tab === item.id ? 'active' : ''}`}
-                onClick={() => setTab(item.id)}
-                key={item.id}
+                className={`panel-tab-btn ${tab === id ? 'active' : ''}`}
+                onClick={() => setTab(id)}
+                key={id}
               >
-                <span className="tab-svg">{item.icon}</span>
-                <span>{item.label}</span>
+                <span>{id}</span>
               </button>
             ))}
           </nav>
@@ -711,7 +1244,6 @@ export default function Platform() {
               <div className="notes-view">
                 <div className="hint-card-clean">
                   <div className="hint-card-header">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6h8c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"/></svg>
                     <b>Approach Hint</b>
                   </div>
                   <p>{problem.hint}</p>
@@ -734,7 +1266,6 @@ export default function Platform() {
                     <small>Standard solution provided for practice</small>
                   </div>
                   <button className="copy-solution-btn" onClick={copySolutionToEditor}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                     Copy to Editor
                   </button>
                 </div>
@@ -782,8 +1313,7 @@ export default function Platform() {
                 patch({ bookmarks: { ...state.bookmarks, [problem.id]: next } })
               }}
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill={bookmark ? '#f59e0b' : 'none'} stroke={bookmark ? '#f59e0b' : 'currentColor'} strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              <span>{bookmark ? 'Bookmarked' : 'Bookmark'}</span>
+              <span>{bookmark ? '★ Bookmarked' : '☆ Bookmark'}</span>
             </button>
             <span className={`footer-status-badge ${(state.statusByProblem?.[problem.id] || 'unsolved').toLowerCase()}`}>
               {state.statusByProblem?.[problem.id] || 'Not started'}
@@ -798,11 +1328,18 @@ export default function Platform() {
                 <span className="code-tag-badge">&lt;/&gt;</span>
                 <span className="editor-label">Code</span>
                 <div className="lang-select-pill">
-                  <select aria-label="Programming language" value={language} onChange={event => { setLanguage(event.target.value); patch({ language: event.target.value }) }}>
+                  <select
+                    aria-label="Programming language"
+                    value={language}
+                    onChange={event => {
+                      setLanguage(event.target.value)
+                      patch({ language: event.target.value })
+                    }}
+                  >
                     <option value="python">Python 3</option>
                     <option value="javascript">JavaScript</option>
                   </select>
-                  <svg className="select-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                  <span className="select-arrow">▾</span>
                 </div>
                 <span className="sqlite-indicator">
                   <span className={`sqlite-dot ${storageError ? 'error' : 'ok'}`} />
@@ -870,20 +1407,17 @@ export default function Platform() {
                 className={`panel-tab-btn ${bottomTab === 'Testcase' ? 'active' : ''}`}
                 onClick={() => setBottomTab('Testcase')}
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
                 <span>Testcase</span>
               </button>
               <button
                 className={`panel-tab-btn ${bottomTab === 'Test Result' ? 'active' : ''}`}
                 onClick={() => setBottomTab('Test Result')}
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                 <span>Test Result</span>
                 {results && <span className={`tab-dot ${results.allPassed ? 'pass' : 'fail'}`} />}
               </button>
               <button className="add-case-btn" onClick={addTestCase}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                <span>Add Testcase</span>
+                <span>+ Add Testcase</span>
               </button>
             </nav>
 
@@ -926,189 +1460,290 @@ export default function Platform() {
 
   const homeView = (
     <section className="full-view home-view">
-      <header className="home-hero-clean">
-        <div className="home-hero-copy">
-          <div className="home-kicker-clean">
-            <span className="kicker-pulse-dot" />
-            <span>COMPANY-WISE INTERVIEW PREPARATION</span>
+      {/* Top Hero Header */}
+      <div className="archive-hero-header">
+        <div className="archive-hero-left">
+          <div className="archive-kicker">
+            <span className="kicker-bar" />
+            <span>COMPANY CURATED ARCHIVES</span>
           </div>
-          <h1 className="hero-headline">
-            Pick your target.<br />
-            <span className="hero-gradient-text">Build your edge.</span>
-          </h1>
-          <p className="hero-subtext">
-            Explore curated practice sets tagged by premier technology firms. Run, test, and master patterns directly in your browser with full offline SQLite sync.
+          <h1 className="archive-main-title">Prepare by Company</h1>
+          <p className="archive-subtitle">
+            Target verified algorithmic interview questions, frequency distributions, and recently reported phone screen patterns from top engineering organizations.
           </p>
-          <div className="home-hero-actions-clean">
-            <button className="primary-glow-btn" onClick={() => startCompanyPractice(selectedHomeCompany)}>
-              <span>Start {selectedHomeCompany} Practice</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-            <button className="resume-btn-clean" onClick={() => openProblem(problem.id)}>
-              <span className="resume-icon">↗</span>
-              <span>Resume #{problem.number} {problem.title}</span>
-            </button>
-          </div>
         </div>
 
-        <div className="home-hero-stats-clean">
-          <div className="stat-card-glass">
-            <span className="stat-card-label">PROBLEMS SOLVED</span>
-            <div className="stat-card-value">
-              <b>{totalSolved}</b>
-              <span className="stat-total">/ {problems.length}</span>
-            </div>
-            <div className="stat-micro-progress">
-              <div className="micro-fill" style={{ width: `${problems.length ? (totalSolved / problems.length) * 100 : 0}%` }} />
-            </div>
+        <div className="telemetry-badge-card">
+          <div className="telemetry-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
           </div>
-
-          <div className="stat-card-glass">
-            <span className="stat-card-label">COMPANIES</span>
-            <div className="stat-card-value">
-              <b>{COMPANY_LIST.length}</b>
-              <span className="stat-sub">Tracked</span>
-            </div>
-          </div>
-
-          <div className="stat-card-glass">
-            <span className="stat-card-label">SUBMISSIONS</span>
-            <div className="stat-card-value">
-              <b>{Object.values(state.submissions || {}).flat().length}</b>
-              <span className="stat-sub">Local</span>
-            </div>
+          <div className="telemetry-copy">
+            <b>65+ Companies</b>
+            <span>Updated daily via interview telemetry</span>
           </div>
         </div>
-      </header>
+      </div>
 
-      <div className="home-layout-clean">
-        <section className="home-company-panel-clean">
-          <div className="panel-heading-clean">
-            <div>
-              <span className="kicker-subtle">BROWSE BY COMPANY</span>
-              <h2>Target Companies</h2>
-              <p>Select a company to view curated interview problems and progress.</p>
-            </div>
-            <span className="counter-pill">{COMPANY_LIST.length} available</span>
+      {/* High-Yield Tier 1 Spotlights */}
+      <div className="spotlights-section">
+        <div className="spotlights-header-row">
+          <div className="spotlights-title">
+            <span className="flame-icon">🔥</span>
+            <h2>High-Yield Tier 1 Spotlights</h2>
           </div>
+          <span className="spotlights-sort-note">Sorted by interview reports (Last 30 Days)</span>
+        </div>
 
-          <div className="search-input-pill">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <div className="tier1-grid">
+          {TIER1_SPOTLIGHTS.map(item => {
+            const isSelected = selectedHomeCompany === item.name
+            return (
+              <div
+                key={item.name}
+                className={`spotlight-card tone-${item.cardTone} ${isSelected ? 'selected' : ''}`}
+                onClick={() => setSelectedHomeCompany(item.name)}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isSelected}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    setSelectedHomeCompany(item.name)
+                  }
+                }}
+              >
+                <div className="spotlight-card-top">
+                  <div className={`monogram-box tone-${item.monogramTone}`}>
+                    {item.monogram}
+                  </div>
+                  <span className={`spotlight-pill tone-${item.badgeTone}`}>
+                    {item.badge}
+                  </span>
+                </div>
+
+                <div className="spotlight-name-row">
+                  <h3>{item.name}</h3>
+                  <span className="sector-chip">{item.sector}</span>
+                </div>
+
+                <p className="spotlight-meta-line">{item.subtitle}</p>
+
+                <div className="difficulty-counts-row">
+                  <span className="diff-count easy">Easy <b>{item.easy}</b></span>
+                  <span className="diff-sep">·</span>
+                  <span className="diff-count med">Med <b>{item.med}</b></span>
+                  <span className="diff-sep">·</span>
+                  <span className="diff-count hard">Hard <b>{item.hard}</b></span>
+                </div>
+
+                <div className="spotlight-card-footer">
+                  <span className="weekly-reports">{item.reportsText}</span>
+                  <button
+                    type="button"
+                    className={`start-prep-link tone-${item.ctaColor}`}
+                    onClick={e => {
+                      e.stopPropagation()
+                      startCompanyPractice(item.name)
+                    }}
+                  >
+                    Start Prep →
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Category Filter Pills + Search + Sort Bar */}
+      <div className="company-controls-bar">
+        <div className="category-tabs" role="tablist" aria-label="Company categories">
+          {CATEGORY_TABS.map(cat => (
+            <button
+              key={cat}
+              type="button"
+              className={`category-tab-pill ${homeCategory === cat ? 'active' : ''}`}
+              onClick={() => setHomeCategory(cat)}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        <div className="company-controls-right">
+          <div className="archive-search-box">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
             <input
               aria-label="Search companies"
               value={homeSearch}
               onChange={event => setHomeSearch(event.target.value)}
-              placeholder="Filter company sets…"
+              placeholder="Search companies..."
             />
             {homeSearch && (
-              <button className="search-clear-btn" onClick={() => setHomeSearch('')}>×</button>
+              <button type="button" className="search-clear-btn" onClick={() => setHomeSearch('')}>×</button>
             )}
           </div>
 
-          <div className="home-company-grid-clean">
-            {visibleHomeCompanies.map(companyName => {
-              const companyQuestions = problems.filter(item => getProblemCompanies(item).includes(companyName))
-              const solvedCount = companyQuestions.filter(item => state.statusByProblem?.[item.id] === 'Solved').length
-              const pct = companyQuestions.length ? Math.round((solvedCount / companyQuestions.length) * 100) : 0
-              return (
-                <button
-                  className={`home-company-card-clean ${selectedHomeCompany === companyName ? 'selected' : ''}`}
-                  key={companyName}
-                  onClick={() => setSelectedHomeCompany(companyName)}
-                  aria-pressed={selectedHomeCompany === companyName}
-                >
-                  <div className="company-logo-squircle">
-                    <CompanyLogo name={companyName} />
-                  </div>
-                  <div className="company-card-meta">
-                    <span className="company-name">{companyName}</span>
-                    <span className="company-stats-line">
-                      {companyQuestions.length} questions <span className="dot-sep">·</span> {solvedCount} solved
-                    </span>
-                    <div className="mini-company-progress">
-                      <div className="mini-fill" style={{ width: `${pct}%` }} />
-                    </div>
-                  </div>
-                  <span className="company-chevron">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                  </span>
-                </button>
-              )
-            })}
-            {!visibleHomeCompanies.length && (
-              <div className="home-no-companies">No companies found matching “{homeSearch}”.</div>
-            )}
+          <div className="archive-sort-pill">
+            <span className="sort-label">Sort:</span>
+            <select
+              aria-label="Sort companies"
+              value={homeSort}
+              onChange={event => setHomeSort(event.target.value)}
+            >
+              <option value="Most Questions">Most Questions</option>
+              <option value="Alphabetical">Alphabetical</option>
+            </select>
+            <span className="sort-caret">▾</span>
           </div>
-        </section>
-
-        <section className="home-detail-panel-clean">
-          <div className="detail-panel-header">
-            <div className="detail-company-title">
-              <div className="company-large-logo">
-                <CompanyLogo name={selectedHomeCompany} />
-              </div>
-              <div className="detail-copy">
-                <span className="eyebrow-clean">CURATED QUESTION SET</span>
-                <h2>{selectedHomeCompany}</h2>
-                <p>{selectedCompanyProblems.length} curated questions <span className="dot-sep">·</span> {selectedCompanySolved} solved</p>
-              </div>
-            </div>
-            <div className="detail-actions">
-              <button className="primary-glow-btn" onClick={() => startCompanyPractice(selectedHomeCompany)}>
-                {selectedCompanySolved === selectedCompanyProblems.length && selectedCompanyProblems.length ? 'Review Set →' : 'Start Practice →'}
-              </button>
-              <button
-                className="secondary-btn-clean"
-                onClick={() => {
-                  setCompany(selectedHomeCompany)
-                  setSearch('')
-                  setDifficulty('all')
-                  setStatusFilter('all')
-                  setView('problems')
-                }}
-              >
-                Full List
-              </button>
-            </div>
-          </div>
-
-          <div className="detail-progress-bar-wrap">
-            <div className="progress-labels">
-              <span>Set Completion</span>
-              <b>{selectedCompanySolved} / {selectedCompanyProblems.length} solved <span className="pct-badge">{selectedCompanyProblems.length ? Math.round((selectedCompanySolved / selectedCompanyProblems.length) * 100) : 0}%</span></b>
-            </div>
-            <div className="detail-progress-track">
-              <div className="detail-progress-fill" style={{ width: `${selectedCompanyProblems.length ? (selectedCompanySolved / selectedCompanyProblems.length) * 100 : 0}%` }} />
-            </div>
-          </div>
-
-          <div className="home-question-list-clean">
-            {selectedCompanyProblems.length ? selectedCompanyProblems.map(item => {
-              const status = state.statusByProblem?.[item.id] || 'Unsolved'
-              return (
-                <button className="question-list-row-clean" key={item.id} onClick={() => openProblem(item.id)}>
-                  <span className={`status-bubble ${status.toLowerCase()}`} title={status} />
-                  <span className="question-row-num">{String(item.number).padStart(2, '0')}</span>
-                  <div className="question-row-copy">
-                    <span className="question-row-title">{item.title}</span>
-                    <span className="question-row-topic">{item.topic}</span>
-                  </div>
-                  <span className={`diff-pill ${item.difficulty.toLowerCase()}`}>
-                    <span className="diff-dot" />
-                    {item.difficulty}
-                  </span>
-                  <span className="question-status-label">{status}</span>
-                  <span className="question-row-arrow">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
-                  </span>
-                </button>
-              )
-            }) : (
-              <div className="empty">No questions for this company yet.</div>
-            )}
-          </div>
-        </section>
+        </div>
       </div>
+
+      {/* 4-Column Company Archive Grid */}
+      <div className="company-archive-grid">
+        {visibleArchiveCompanies.map(item => {
+          const isSelected = selectedHomeCompany === item.name
+          const hasLocalSet = COMPANY_LIST.includes(item.name)
+          return (
+            <div
+              key={item.name}
+              className={`archive-company-card ${isSelected ? 'selected' : ''}`}
+              onClick={() => {
+                setSelectedHomeCompany(item.name)
+                if (!hasLocalSet) {
+                  notify(`Showing curated telemetry for ${item.name}`)
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-pressed={isSelected}
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  setSelectedHomeCompany(item.name)
+                }
+              }}
+            >
+              <div className="archive-card-top">
+                <div className={`monogram-box small tone-${item.monogramTone}`}>
+                  {item.monogram}
+                </div>
+                <span className={`archive-sector-badge tone-${item.tagTone}`}>
+                  {item.tag}
+                </span>
+              </div>
+
+              <h3 className="archive-company-name">{item.name}</h3>
+              <p className="archive-company-sub">{item.subtitle}</p>
+
+              <div className="difficulty-counts-row compact">
+                <span className="diff-count easy">Easy <b>{item.easy}</b></span>
+                <span className="diff-sep">·</span>
+                <span className="diff-count med">Med <b>{item.med}</b></span>
+                <span className="diff-sep">·</span>
+                <span className="diff-count hard">Hard <b>{item.hard}</b></span>
+              </div>
+
+              <div className="archive-card-footer">
+                <span className={`archive-report-metric tone-${item.footerLeftTone}`}>
+                  {item.footerLeft}
+                </span>
+                <button
+                  type="button"
+                  className={`explore-link tone-${item.ctaTone}`}
+                  onClick={e => {
+                    e.stopPropagation()
+                    if (hasLocalSet) {
+                      startCompanyPractice(item.name)
+                    } else {
+                      setSelectedHomeCompany(item.name)
+                      setView('problems')
+                    }
+                  }}
+                >
+                  Explore →
+                </button>
+              </div>
+            </div>
+          )
+        })}
+        {!visibleArchiveCompanies.length && (
+          <div className="home-no-companies">No companies found matching “{homeSearch}”.</div>
+        )}
+      </div>
+
+      {/* Selected Company Curated Question Set Drawer */}
+      <section className="selected-company-drawer">
+        <div className="drawer-header">
+          <div className="drawer-title-group">
+            <div className="company-large-logo">
+              <CompanyLogo name={selectedHomeCompany} />
+            </div>
+            <div>
+              <span className="eyebrow-clean">LOCAL WORKSPACE QUESTION BANK · {selectedHomeCompany.toUpperCase()}</span>
+              <h2>{selectedHomeCompany} Curated Problems</h2>
+              <p>
+                {selectedCompanyProblems.length} local interactive problems <span className="dot-sep">·</span> {selectedCompanySolved} solved
+              </p>
+            </div>
+          </div>
+
+          <div className="drawer-actions">
+            <button className="primary-glow-btn" onClick={() => startCompanyPractice(selectedHomeCompany)}>
+              {selectedCompanySolved === selectedCompanyProblems.length && selectedCompanyProblems.length
+                ? 'Review Set →'
+                : `Start ${selectedHomeCompany} Practice →`}
+            </button>
+            <button
+              className="secondary-btn-clean"
+              onClick={() => openProblem(problem.id)}
+            >
+              Resume #{problem.number} {problem.title}
+            </button>
+            <button
+              className="secondary-btn-clean"
+              onClick={() => {
+                setCompany(COMPANY_LIST.includes(selectedHomeCompany) ? selectedHomeCompany : 'all')
+                setSearch('')
+                setDifficulty('all')
+                setStatusFilter('all')
+                setView('problems')
+              }}
+            >
+              Full Directory
+            </button>
+          </div>
+        </div>
+
+        <div className="home-question-list-clean">
+          {selectedCompanyProblems.length ? selectedCompanyProblems.map(item => {
+            const status = state.statusByProblem?.[item.id] || 'Unsolved'
+            return (
+              <button className="question-list-row-clean" key={item.id} onClick={() => openProblem(item.id)}>
+                <span className={`status-bubble ${status.toLowerCase()}`} title={status} />
+                <span className="question-row-num">{String(item.number).padStart(2, '0')}</span>
+                <div className="question-row-copy">
+                  <span className="question-row-title">{item.title}</span>
+                  <span className="question-row-topic">{item.topic}</span>
+                </div>
+                <span className={`diff-pill ${item.difficulty.toLowerCase()}`}>
+                  <span className="diff-dot" />
+                  {item.difficulty}
+                </span>
+                <span className="question-status-label">{status}</span>
+                <span className="question-row-arrow">→</span>
+              </button>
+            )
+          }) : (
+            <div className="empty">No local questions tagged for {selectedHomeCompany} yet. Click "Create Problem" in the Problems tab to add one.</div>
+          )}
+        </div>
+      </section>
     </section>
   )
 
@@ -1121,8 +1756,7 @@ export default function Platform() {
           <p>Pick up where you left off or search across algorithms and data structures.</p>
         </div>
         <button className="primary-glow-btn" onClick={() => setModal('problem')}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span>Create Problem</span>
+          <span>+ Create Problem</span>
         </button>
       </div>
 
@@ -1147,8 +1781,15 @@ export default function Platform() {
 
       <div className="filters-clean">
         <div className="search-field-clean">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search by title, topic, or keyword…" />
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            value={search}
+            onChange={event => setSearch(event.target.value)}
+            placeholder="Search by title, topic, or keyword…"
+          />
           {search && <button className="clear-btn" onClick={() => setSearch('')}>×</button>}
         </div>
         <div className="select-pill-wrap">
@@ -1156,7 +1797,7 @@ export default function Platform() {
             <option value="all">All Companies</option>
             {COMPANY_LIST.map(item => <option key={item}>{item}</option>)}
           </select>
-          <svg className="select-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <span className="select-arrow">▾</span>
         </div>
         <div className="select-pill-wrap">
           <select aria-label="Difficulty filter" value={difficulty} onChange={event => setDifficulty(event.target.value)}>
@@ -1165,7 +1806,7 @@ export default function Platform() {
             <option>Medium</option>
             <option>Hard</option>
           </select>
-          <svg className="select-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <span className="select-arrow">▾</span>
         </div>
         <div className="select-pill-wrap">
           <select aria-label="Status filter" value={statusFilter} onChange={event => setStatusFilter(event.target.value)}>
@@ -1174,7 +1815,7 @@ export default function Platform() {
             <option>Attempted</option>
             <option>Solved</option>
           </select>
-          <svg className="select-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+          <span className="select-arrow">▾</span>
         </div>
       </div>
 
@@ -1182,7 +1823,7 @@ export default function Platform() {
         <table>
           <thead>
             <tr>
-              <th style={{ width: '100px' }}>Status</th>
+              <th style={{ width: '110px' }}>Status</th>
               <th>Title</th>
               <th style={{ width: '120px' }}>Difficulty</th>
               <th>Companies</th>
@@ -1329,11 +1970,9 @@ export default function Platform() {
           </p>
           <div className="backup-btn-group">
             <button className="backup-action-btn export" onClick={() => exportBackup(state)}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               <span>Export Workspace JSON</span>
             </button>
             <button className="backup-action-btn import" onClick={() => backupInput.current?.click()}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               <span>Import Workspace JSON</span>
             </button>
             <input ref={backupInput} className="backup-input" type="file" accept="application/json,.json" onChange={restoreBackup} />
@@ -1365,6 +2004,26 @@ export default function Platform() {
     </section>
   )
 
+  const statusFooter = (
+    <footer className="platform-status-footer">
+      <div className="status-footer-left">
+        <span className="daemon-indicator">
+          <span className="daemon-dot" />
+          <span>Daemon Sync: Active (24ms)</span>
+        </span>
+        <span className="footer-sep">·</span>
+        <span className="kernel-tag">Kernel v4.19.0-sandbox</span>
+      </div>
+      <div className="status-footer-right">
+        <button type="button" onClick={() => setView('sessions')}>Help Center</button>
+        <button type="button" onClick={() => setView('problems')}>API Reference</button>
+        <button type="button" onClick={() => setView('home')}>Terms</button>
+        <button type="button" onClick={() => setView('home')}>Privacy</button>
+        <span className="copyright-tag">© 2025 YourCode Inc.</span>
+      </div>
+    </footer>
+  )
+
   if (!storageReady) {
     return (
       <div className="platform">
@@ -1383,10 +2042,10 @@ export default function Platform() {
       <div className="content">
         {view === 'home' ? homeView : view === 'workspace' ? workspace : view === 'problems' ? problemsView : sessionsView}
       </div>
+      {statusFooter}
       {toast && (
         <div className="toast-clean">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          <span>{toast}</span>
+          <span>✓ {toast}</span>
         </div>
       )}
       {modal === 'problem' && (
@@ -1465,4 +2124,3 @@ export default function Platform() {
     </div>
   )
 }
-
