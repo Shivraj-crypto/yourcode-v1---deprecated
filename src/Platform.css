@@ -749,6 +749,16 @@
   font-size: 12.5px;
 }
 
+.monogram-box .company-logo {
+  width: 22px;
+  height: 22px;
+}
+
+.monogram-box.small .company-logo {
+  width: 18px;
+  height: 18px;
+}
+
 .monogram-box.tone-amber {
   background: rgba(245, 158, 11, 0.14);
   color: #fbbf24;

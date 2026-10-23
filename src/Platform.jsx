@@ -1,7 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Editor from '@monaco-editor/react'
-import { faAmazon, faApple, faGoogle, faMeta, faTiktok, faUber } from '@fortawesome/free-brands-svg-icons'
-import { siAutodesk, siGoldmansachs, siNetflix } from 'simple-icons'
+import {
+  faAirbnb,
+  faAmazon,
+  faApple,
+  faMeta,
+  faSpotify,
+  faStripe,
+  faTiktok,
+  faUber,
+} from '@fortawesome/free-brands-svg-icons'
+import {
+  siAutodesk,
+  siBytedance,
+  siDatabricks,
+  siGoldmansachs,
+  siNetflix,
+  siNvidia,
+  siSnowflake,
+} from 'simple-icons'
 import { COMPANY_LIST, DEFAULT_PROBLEMS, getProblemCompanies } from './data/problems'
 import { useTimer, useToast } from './hooks/useToast'
 import { executeCode } from './utils/executor'
@@ -14,15 +31,24 @@ const formatInput = (args, names = []) => args.map((value, index) => `${names[in
 const formatOutput = value => typeof value === 'string' ? value : JSON.stringify(value) ?? String(value)
 
 const COMPANY_BRANDS = {
-  Amazon: { fontAwesome: faAmazon, color: '#ff9900' },
-  Google: { fontAwesome: faGoogle, color: '#4285f4' },
+  Google: { custom: 'google' },
   Meta: { fontAwesome: faMeta, color: '#0866ff' },
+  Amazon: { fontAwesome: faAmazon, color: '#ff9900' },
   Microsoft: { custom: 'microsoft' },
   Apple: { fontAwesome: faApple, color: '#f4f4f4' },
-  'Goldman Sachs': { simpleIcon: siGoldmansachs, color: '#75aadb' },
+  NVIDIA: { simpleIcon: siNvidia, color: '#76b900' },
+  Netflix: { simpleIcon: siNetflix, color: '#e50914' },
   Bloomberg: { custom: 'bloomberg' },
   Uber: { fontAwesome: faUber, color: '#f4f4f4' },
-  Netflix: { simpleIcon: siNetflix, color: '#e50914' },
+  Stripe: { fontAwesome: faStripe, color: '#635bff' },
+  ByteDance: { simpleIcon: siBytedance, color: '#3c8cff' },
+  Databricks: { simpleIcon: siDatabricks, color: '#ff3621' },
+  Snowflake: { simpleIcon: siSnowflake, color: '#29b5e8' },
+  Spotify: { fontAwesome: faSpotify, color: '#1ed760' },
+  Airbnb: { fontAwesome: faAirbnb, color: '#ff5a5f' },
+  'Oracle Cloud': { custom: 'oracle' },
+  Oracle: { custom: 'oracle' },
+  'Goldman Sachs': { simpleIcon: siGoldmansachs, color: '#75aadb' },
   Adobe: { custom: 'adobe' },
   TikTok: { fontAwesome: faTiktok, color: '#25f4ee' },
   'Capital One': { custom: 'capital-one' },
@@ -404,6 +430,84 @@ const CATEGORY_TABS = [
 const CompanyLogo = ({ name }) => {
   const brand = COMPANY_BRANDS[name]
   const svgColor = brand?.color || '#b8b8b8'
+
+  if (brand?.custom === 'google') {
+    return (
+      <span className="company-logo" title="Google logo">
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+          <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+          <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.04 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+          <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+        </svg>
+      </span>
+    )
+  }
+
+  if (brand?.custom === 'microsoft') {
+    return (
+      <span className="company-logo" title="Microsoft logo">
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <rect x="1.5" y="1.5" width="9.8" height="9.8" fill="#F25022" rx="1"/>
+          <rect x="12.7" y="1.5" width="9.8" height="9.8" fill="#7FBA00" rx="1"/>
+          <rect x="1.5" y="12.7" width="9.8" height="9.8" fill="#00A4EF" rx="1"/>
+          <rect x="12.7" y="12.7" width="9.8" height="9.8" fill="#FFB900" rx="1"/>
+        </svg>
+      </span>
+    )
+  }
+
+  if (brand?.custom === 'adobe') {
+    return (
+      <span className="company-logo" title="Adobe logo">
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path fill="#ED1C24" d="M14.58 2H24v20zM9.42 2H0v20zM12 9.17L16.42 22h-3.66l-1.39-3.83H8.38z" />
+        </svg>
+      </span>
+    )
+  }
+
+  if (brand?.custom === 'oracle') {
+    return (
+      <span className="company-logo" title="Oracle logo">
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path fill="#F80000" d="M16.4 4.5H7.6C3.4 4.5 0 7.9 0 12.1s3.4 7.6 7.6 7.6h8.8c4.2 0 7.6-3.4 7.6-7.6s-3.4-7.6-7.6-7.6zm-.3 11.7H7.9c-2.3 0-4.1-1.8-4.1-4.1s1.8-4.1 4.1-4.1h8.2c2.3 0 4.1 1.8 4.1 4.1 0 2.2-1.9 4.1-4.1 4.1z"/>
+        </svg>
+      </span>
+    )
+  }
+
+  if (brand?.custom === 'bloomberg') {
+    return (
+      <span className="company-logo" title="Bloomberg logo">
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path fill="#F4F4F4" d="M6 3.5h7.2c2.8 0 4.8 1.8 4.8 4.2 0 1.8-1 3.2-2.5 3.8 2 .6 3.3 2.2 3.3 4.3 0 2.6-2.2 4.7-5.2 4.7H6V3.5zm3.6 6.3h3.2c1 0 1.7-.7 1.7-1.7s-.7-1.7-1.7-1.7H9.6v3.4zm0 7.5h3.6c1.2 0 2-.8 2-2s-.8-2-2-2H9.6v4z"/>
+        </svg>
+      </span>
+    )
+  }
+
+  if (brand?.custom === 'capital-one') {
+    return (
+      <span className="company-logo" title="Capital One logo">
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path fill="#D03027" d="M2.5 13.5c4.5-5.2 12.2-7.8 19-5.5-5.2 1.2-10.5 4.8-14.2 9.2-1.8 2.1-3.6 2.3-4.8 1.2-1.2-1.1-1.1-3.2 0-4.9z"/>
+          <path fill="#004B8D" d="M11 6.5h3.2l-3.8 11H7.2l3.8-11z"/>
+        </svg>
+      </span>
+    )
+  }
+
+  if (brand?.custom === 'scale-ai') {
+    return (
+      <span className="company-logo" title="Scale AI logo">
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path fill="#A78BFA" d="M12 2L2 7.5v9L12 22l10-5.5v-9L12 2zm0 2.5l7.5 4.1-3.2 1.8L8.8 6.3 12 4.5zM4.2 9l6.8 3.7v7.5L4.2 16.5V9zm8.8 11.2V12.7l3.2-1.8v7.4l-3.2 1.9zm4.2-3.2v-7.4l2.8-1.5v7.4l-2.8 1.5z"/>
+        </svg>
+      </span>
+    )
+  }
+
   if (brand?.fontAwesome) {
     const [width, height, , , paths] = brand.fontAwesome.icon
     return (
@@ -414,6 +518,7 @@ const CompanyLogo = ({ name }) => {
       </span>
     )
   }
+
   if (brand?.simpleIcon) {
     return (
       <span className="company-logo" title={`${name} logo`}>
@@ -423,28 +528,15 @@ const CompanyLogo = ({ name }) => {
       </span>
     )
   }
+
+  const initials = name.slice(0, 2).toUpperCase()
   return (
-    <span className="company-logo" title={`${name} logo`}>
+    <span className="company-logo fallback" title={`${name} logo`}>
       <svg aria-hidden="true" viewBox="0 0 24 24">
-        {brand?.custom === 'microsoft' ? (
-          <>
-            <path fill="#f25022" d="M1 1h10v10H1z" />
-            <path fill="#7fba00" d="M13 1h10v10H13z" />
-            <path fill="#00a4ef" d="M1 13h10v10H1z" />
-            <path fill="#ffb900" d="M13 13h10v10H13z" />
-          </>
-        ) : brand?.custom === 'adobe' ? (
-          <path fill="#ed1c24" fillRule="evenodd" d="M2 22 9.2 2h5.6L22 22h-5.4L12 9.6 7.4 22H2Zm7.2-4h5.6L12 10.5 9.2 18Z" />
-        ) : brand?.custom === 'capital-one' ? (
-          <>
-            <path fill="none" stroke="#0052a4" strokeLinecap="round" strokeWidth="3" d="M18.5 8.5A8 8 0 1 0 19 16" />
-            <path fill="none" stroke="#0052a4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" d="M7 6.5c4.8-3.7 10.7-4.2 15-2.5l-2.2 4.1" />
-          </>
-        ) : brand?.custom === 'bloomberg' ? (
-          <text fill="#f4f4f4" x="3" y="21" fontFamily="Arial,sans-serif" fontSize="21" fontWeight="700">B</text>
-        ) : (
-          <text fill="#a78bfa" x="3" y="21" fontFamily="Arial,sans-serif" fontSize="21" fontWeight="700">S</text>
-        )}
+        <rect width="24" height="24" rx="5" fill="#202430" />
+        <text x="12" y="16" fill="#cbd5e1" fontSize="11" fontWeight="700" textAnchor="middle" fontFamily="sans-serif">
+          {initials}
+        </text>
       </svg>
     </span>
   )
@@ -1516,7 +1608,7 @@ export default function Platform() {
               >
                 <div className="spotlight-card-top">
                   <div className={`monogram-box tone-${item.monogramTone}`}>
-                    {item.monogram}
+                    <CompanyLogo name={item.name} />
                   </div>
                   <span className={`spotlight-pill tone-${item.badgeTone}`}>
                     {item.badge}
@@ -1631,7 +1723,7 @@ export default function Platform() {
             >
               <div className="archive-card-top">
                 <div className={`monogram-box small tone-${item.monogramTone}`}>
-                  {item.monogram}
+                  <CompanyLogo name={item.name} />
                 </div>
                 <span className={`archive-sector-badge tone-${item.tagTone}`}>
                   {item.tag}
